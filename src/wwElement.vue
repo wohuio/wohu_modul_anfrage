@@ -297,7 +297,14 @@ export default {
     };
 
     const searchHistorie = async (query) => {
-      if (!query || !props.content.userId) {
+      if (!query || query.trim() === '') {
+        loadHistorie();
+        return;
+      }
+
+      if (!props.content.userId) {
+        console.error('searchHistorie: user_id is required but not provided');
+        showStatus('User ID fehlt für Suche', 'error');
         loadHistorie();
         return;
       }
@@ -308,39 +315,76 @@ export default {
         const url = props.content.historieSearchEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/text_search';
 
+        const userId = parseInt(props.content.userId);
+
+        if (isNaN(userId)) {
+          console.error('searchHistorie: user_id is not a valid number:', props.content.userId);
+          showStatus('User ID ist ungültig', 'error');
+          loadHistorie();
+          return;
+        }
+
         const params = new URLSearchParams({
-          user_id: parseInt(props.content.userId),
-          search_term: query,
+          user_id: userId.toString(),
+          search_term: query.trim(),
+          page: '1',
+          per_page: '100'
+        });
+
+        console.log('=== Searching history ===');
+        console.log('URL:', url);
+        console.log('Parameters:', {
+          user_id: userId,
+          search_term: query.trim(),
           page: 1,
           per_page: 100
         });
-
-        console.log('Searching history:', `${url}?${params.toString()}`);
+        console.log('Full URL:', `${url}?${params.toString()}`);
 
         const res = await fetch(`${url}?${params.toString()}`);
-        console.log('Search response:', res.status, res.statusText);
+        console.log('Search response status:', res.status, res.statusText);
 
         if (!res.ok) {
           const errorText = await res.text().catch(() => '');
-          console.error('Search error:', {
-            status: res.status,
-            body: errorText,
-            url: `${url}?${params.toString()}`
-          });
-          throw new Error('Search failed');
+          console.error('=== Search API Error ===');
+          console.error('Status:', res.status);
+          console.error('Status Text:', res.statusText);
+          console.error('Response Body:', errorText);
+          console.error('Request URL:', `${url}?${params.toString()}`);
+
+          // Try to parse error as JSON
+          try {
+            const errorJson = JSON.parse(errorText);
+            console.error('Error Details:', errorJson);
+          } catch (e) {
+            console.error('Error response is not JSON');
+          }
+
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
 
         const data = await res.json();
-        console.log('Search results:', data);
+        console.log('Search response data:', data);
+        console.log('Response type:', typeof data, 'Is array:', Array.isArray(data));
+
+        if (data && typeof data === 'object') {
+          console.log('Response keys:', Object.keys(data));
+        }
 
         // Handle response structure
         historie.value = Array.isArray(data) ? data :
                         Array.isArray(data.items) ? data.items :
-                        Array.isArray(data.search_results) ? data.search_results : [];
+                        Array.isArray(data.results) ? data.results :
+                        Array.isArray(data.search_results) ? data.search_results :
+                        Array.isArray(data.data) ? data.data : [];
 
         histPage.value = 1;
 
-        console.log('Historie search completed:', historie.value.length, 'results');
+        console.log('=== Search completed ===');
+        console.log('Results found:', historie.value.length);
+        if (historie.value.length > 0) {
+          console.log('First result:', historie.value[0]);
+        }
 
         emit('trigger-event', {
           name: 'historie-searched',
@@ -348,8 +392,12 @@ export default {
         });
 
       } catch (err) {
-        console.error('searchHistorie error:', err);
+        console.error('=== searchHistorie error ===');
+        console.error('Error:', err);
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
         historie.value = [];
+        showStatus('Suchfehler: ' + err.message, 'error');
       } finally {
         loadingHist.value = false;
       }
