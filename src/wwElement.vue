@@ -339,12 +339,24 @@ export default {
         const url = props.content.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list';
 
-        const res = await fetch(`${url}?user_id=${parseInt(props.content.userId)}&page=1&per_page=100`);
-        if (!res.ok) throw new Error('Load failed');
+        const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}&page=1&per_page=100`;
+        console.log('Loading favorites:', fullUrl);
+
+        const res = await fetch(fullUrl);
+        console.log('Load favorites response:', res.status, res.statusText);
+
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error('Load favorites error:', { status: res.status, body: errorText });
+          throw new Error('Load failed');
+        }
 
         const data = await res.json();
+        console.log('Favorites data:', data);
+
         favorites.value = Array.isArray(data.favorites) ? data.favorites :
                          Array.isArray(data) ? data : [];
+        console.log('Favorites loaded:', favorites.value.length, 'items');
         favPage.value = 1;
 
         emit('trigger-event', {
@@ -353,6 +365,7 @@ export default {
         });
 
       } catch (err) {
+        console.error('loadFavorites error:', err);
         favorites.value = [];
       } finally {
         loadingFav.value = false;
@@ -375,15 +388,28 @@ export default {
         const url = props.content.favoritenAddEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
 
+        const payload = {
+          product_beschreibung_anfrage_id: anfrageId,
+        };
+
+        console.log('Adding favorite:', { url, payload });
+
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_beschreibung_anfrage_id: anfrageId,
-          }),
+          body: JSON.stringify(payload),
         });
 
-        if (!res.ok) throw new Error('Add failed');
+        console.log('Add favorite response:', res.status, res.statusText);
+
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error('Add favorite error:', { status: res.status, body: errorText });
+          throw new Error(`HTTP ${res.status}: ${errorText || res.statusText}`);
+        }
+
+        const responseData = await res.json();
+        console.log('Add favorite success:', responseData);
 
         await loadFavorites();
 
@@ -393,6 +419,7 @@ export default {
         });
 
       } catch (err) {
+        console.error('addFavorite error:', err);
         showStatus('Fehler beim Hinzufügen', 'error');
       }
     };
