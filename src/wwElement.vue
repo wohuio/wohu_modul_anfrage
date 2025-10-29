@@ -1,318 +1,153 @@
 <template>
-  <div class="anfrage-module" :style="containerStyle" :class="layoutClass">
+  <div class="anfrage-module" :style="moduleStyle">
     <!-- Form Section -->
-    <div class="form-section">
-      <h2 v-if="content?.formTitle" class="section-title">{{ content.formTitle }}</h2>
+    <div class="section form-section">
+      <h2 class="section-title">{{ content.formTitle || 'Neue Anfrage erstellen' }}</h2>
 
-      <form @submit.prevent="handleSubmit" class="form-content">
-        <!-- Titel Field -->
-        <div class="form-group">
-          <label :style="{ color: content?.labelColor }">
-            {{ content?.titleLabel || 'Titel' }}
-          </label>
+      <form @submit.prevent="submitForm">
+        <!-- Titel -->
+        <div class="field">
+          <label>{{ content.titleLabel || 'Titel' }}</label>
           <input
-            v-model="formData.produkt_titel"
+            v-model="form.produkt_titel"
             type="text"
-            class="form-input"
-            :style="inputStyle"
-            placeholder="Titel eingeben..."
             required
+            placeholder="Titel eingeben..."
           />
         </div>
 
-        <!-- Beschreibung Field -->
-        <div class="form-group">
-          <label :style="{ color: content?.labelColor }">
-            {{ content?.descriptionLabel || 'Beschreibung' }}
-          </label>
+        <!-- Beschreibung -->
+        <div class="field">
+          <label>{{ content.descriptionLabel || 'Beschreibung' }}</label>
           <textarea
-            v-model="formData.produkt_beschreibung"
-            class="form-textarea"
-            :style="inputStyle"
-            placeholder="Beschreibung eingeben..."
-            rows="5"
+            v-model="form.produkt_beschreibung"
             required
+            rows="5"
+            placeholder="Beschreibung eingeben..."
           ></textarea>
         </div>
 
-        <!-- Auflagen Fields (Dynamic Array) -->
-        <div class="form-group">
-          <label :style="{ color: content?.labelColor }">
-            {{ content?.auflageLabel || 'Auflagen' }}
-          </label>
-
-          <div class="auflagen-list">
-            <div
-              v-for="(auflage, index) in formData.menge"
-              :key="index"
-              class="auflage-item"
-            >
+        <!-- Auflagen -->
+        <div class="field">
+          <label>{{ content.auflageLabel || 'Auflagen' }}</label>
+          <div class="auflagen">
+            <div v-for="(auflage, idx) in form.menge" :key="idx" class="auflage-row">
               <input
-                v-model.number="formData.menge[index]"
+                v-model.number="form.menge[idx]"
                 type="number"
-                class="form-input auflage-input"
-                :style="inputStyle"
-                :placeholder="content?.auflagePlaceholder || 'z.B. 1000'"
                 min="1"
                 required
+                :placeholder="content.auflagePlaceholder || 'z.B. 1000'"
               />
               <button
-                v-if="formData.menge.length > (content?.minAuflagen || 1)"
+                v-if="form.menge.length > (content.minAuflagen || 1)"
                 type="button"
-                class="btn btn-remove"
-                :style="removeButtonStyle"
-                @click="removeAuflage(index)"
-                :title="content?.removeAuflageButtonText || 'Entfernen'"
+                class="btn-remove"
+                @click="form.menge.splice(idx, 1)"
               >
                 ✕
               </button>
             </div>
           </div>
-
           <button
-            v-if="formData.menge.length < (content?.maxAuflagen || 10)"
+            v-if="form.menge.length < (content.maxAuflagen || 10)"
             type="button"
-            class="btn btn-add"
-            :style="addButtonStyle"
-            @click="addAuflage"
+            class="btn-add"
+            @click="form.menge.push(0)"
           >
-            {{ content?.addAuflageButtonText || '+ Auflage hinzufügen' }}
+            {{ content.addAuflageButtonText || '+ Auflage hinzufügen' }}
           </button>
         </div>
 
-        <!-- Status Messages -->
-        <div v-if="statusMessage" :class="['status-message', statusType]">
-          {{ statusMessage }}
+        <!-- Status Message -->
+        <div v-if="statusMsg" :class="['status', statusType]">
+          {{ statusMsg }}
         </div>
 
-        <!-- Action Buttons -->
-        <div class="form-actions">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :style="primaryButtonStyle"
-            :disabled="isSubmitting"
-          >
-            {{ isSubmitting ? 'Wird gesendet...' : (content?.submitButtonText || 'Anfrage senden') }}
+        <!-- Actions -->
+        <div class="actions">
+          <button type="submit" class="btn-primary" :disabled="loading">
+            {{ loading ? 'Wird gesendet...' : (content.submitButtonText || 'Anfrage senden') }}
           </button>
-
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :style="secondaryButtonStyle"
-            @click="handleReset"
-            :disabled="isSubmitting"
-          >
-            {{ content?.resetButtonText || 'Zurücksetzen' }}
+          <button type="button" class="btn-secondary" @click="resetForm" :disabled="loading">
+            {{ content.resetButtonText || 'Zurücksetzen' }}
           </button>
         </div>
       </form>
     </div>
 
     <!-- Favoriten Section -->
-    <div v-if="content?.showFavoriten" class="favoriten-section">
-      <h2 class="section-title">{{ content?.favoritenTitle || 'Meine Favoriten' }}</h2>
+    <div v-if="content.showFavoriten" class="section favoriten-section">
+      <h2 class="section-title">{{ content.favoritenTitle || 'Meine Favoriten' }}</h2>
 
-      <div v-if="isLoadingFavoriten" class="favoriten-loading">
-        Lade Favoriten...
-      </div>
-
-      <div v-else-if="favoritenError" class="favoriten-error">
-        {{ favoritenError }}
-      </div>
-
-      <div v-else-if="favoritenItems.length === 0" class="favoriten-empty">
-        Noch keine Favoriten vorhanden
-      </div>
-
-      <div v-else class="favoriten-list">
-        <div
-          v-for="favorit in displayedFavoritenItems"
-          :key="favorit.id"
-          class="favoriten-item"
-        >
-          <div class="favoriten-item-header">
-            <h3 class="favoriten-item-title">
-              {{ favorit.product_beschreibung_anfrage?.produkt_titel || 'Unbekannt' }}
-            </h3>
-            <button
-              type="button"
-              class="btn btn-heart-filled"
-              @click="removeFavorite(favorit)"
-              :disabled="isTogglingFavorite"
-              title="Von Favoriten entfernen"
-            >
-              ❤️
-            </button>
+      <div v-if="loadingFav" class="empty">Lade Favoriten...</div>
+      <div v-else-if="favorites.length === 0" class="empty">Noch keine Favoriten</div>
+      <div v-else class="items">
+        <div v-for="fav in paginatedFavorites" :key="fav.id" class="item favorite-item">
+          <div class="item-header">
+            <h3>{{ fav.product_beschreibung_anfrage?.produkt_titel || 'Unbekannt' }}</h3>
+            <button class="btn-heart" @click="removeFavorite(fav.id)">❤️</button>
           </div>
-
-          <p class="favoriten-item-description">
-            {{ favorit.product_beschreibung_anfrage?.produkt_beschreibung || '' }}
-          </p>
-
-          <div class="favoriten-item-menge">
+          <p>{{ fav.product_beschreibung_anfrage?.produkt_beschreibung }}</p>
+          <div class="meta">
             <strong>Auflagen:</strong>
-            <span v-if="Array.isArray(favorit.product_beschreibung_anfrage?.menge) && favorit.product_beschreibung_anfrage.menge.length > 0">
-              {{ favorit.product_beschreibung_anfrage.menge.join(', ') }}
-            </span>
-            <span v-else class="text-muted">Keine Auflagen</span>
+            {{ formatMenge(fav.product_beschreibung_anfrage?.menge) }}
           </div>
-
-          <button
-            type="button"
-            class="btn btn-template"
-            :style="primaryButtonStyle"
-            @click="loadTemplate(favorit.product_beschreibung_anfrage)"
-          >
-            {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
+          <button class="btn-template" @click="loadTemplate(fav.product_beschreibung_anfrage)">
+            {{ content.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
       </div>
 
-      <!-- Favoriten Pagination -->
-      <div v-if="favoritenItems.length > favoritenItemsPerPage" class="pagination">
-        <button
-          class="pagination-btn"
-          @click="goToFavoritenPage(currentFavoritenPage - 1)"
-          :disabled="currentFavoritenPage === 1"
-        >
-          ‹ Zurück
-        </button>
-
-        <div class="pagination-numbers">
-          <button
-            v-for="page in getPageNumbers(currentFavoritenPage, favoritenTotalPages)"
-            :key="page"
-            class="pagination-number"
-            :class="{ active: page === currentFavoritenPage, ellipsis: page === '...' }"
-            @click="page !== '...' && goToFavoritenPage(page)"
-            :disabled="page === '...'"
-          >
-            {{ page }}
-          </button>
-        </div>
-
-        <button
-          class="pagination-btn"
-          @click="goToFavoritenPage(currentFavoritenPage + 1)"
-          :disabled="currentFavoritenPage === favoritenTotalPages"
-        >
-          Weiter ›
-        </button>
+      <!-- Pagination -->
+      <div v-if="totalFavPages > 1" class="pagination">
+        <button @click="favPage--" :disabled="favPage === 1">‹</button>
+        <span>{{ favPage }} / {{ totalFavPages }}</span>
+        <button @click="favPage++" :disabled="favPage === totalFavPages">›</button>
       </div>
     </div>
 
     <!-- Historie Section -->
-    <div v-if="content?.showHistorie" class="historie-section">
-      <h2 class="section-title">{{ content?.historieTitle || 'Vergangene Anfragen' }}</h2>
+    <div v-if="content.showHistorie" class="section historie-section">
+      <h2 class="section-title">{{ content.historieTitle || 'Vergangene Anfragen' }}</h2>
 
-      <!-- Search Input -->
-      <div class="search-container">
+      <!-- Search -->
+      <div class="search">
         <input
           v-model="searchQuery"
           type="text"
-          class="search-input"
-          :style="inputStyle"
-          :placeholder="content?.historieSearchPlaceholder || 'Suchen...'"
-          @input="handleSearchInput"
+          :placeholder="content.historieSearchPlaceholder || 'Suchen...'"
+          @input="onSearch"
         />
-        <button
-          v-if="searchQuery"
-          type="button"
-          class="search-clear-btn"
-          @click="clearSearch"
-          title="Suche löschen"
-        >
-          ✕
-        </button>
+        <button v-if="searchQuery" class="btn-clear" @click="clearSearch">✕</button>
       </div>
 
-      <div v-if="isLoadingHistorie" class="historie-loading">
-        Lade Historie...
-      </div>
-
-      <div v-else-if="historieError" class="historie-error">
-        {{ historieError }}
-      </div>
-
-      <div v-else-if="historieItems.length === 0" class="historie-empty">
-        Keine vergangenen Anfragen vorhanden
-      </div>
-
-      <div v-else class="historie-list">
-        <div
-          v-for="item in displayedHistorieItems"
-          :key="item.id"
-          class="historie-item"
-        >
-          <div class="historie-item-header">
-            <h3 class="historie-item-title">{{ item.produkt_titel }}</h3>
-            <button
-              type="button"
-              class="btn btn-heart"
-              @click="toggleFavorite(item)"
-              :disabled="isTogglingFavorite"
-              :title="isFavorite(item.id) ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen'"
-            >
+      <div v-if="loadingHist" class="empty">Lade Historie...</div>
+      <div v-else-if="historie.length === 0" class="empty">Keine Anfragen gefunden</div>
+      <div v-else class="items">
+        <div v-for="item in paginatedHistorie" :key="item.id" class="item">
+          <div class="item-header">
+            <h3>{{ item.produkt_titel }}</h3>
+            <button class="btn-heart" @click="toggleFavorite(item.id)">
               {{ isFavorite(item.id) ? '❤️' : '🤍' }}
             </button>
           </div>
-
-          <div class="historie-item-meta">
-            <span class="historie-item-date">{{ formatDate(item.created_at) }}</span>
+          <div class="date">{{ formatDate(item.created_at) }}</div>
+          <p>{{ item.produkt_beschreibung }}</p>
+          <div class="meta">
+            <strong>Auflagen:</strong> {{ formatMenge(item.menge) }}
           </div>
-
-          <p class="historie-item-description">{{ item.produkt_beschreibung }}</p>
-
-          <div class="historie-item-menge">
-            <strong>Auflagen:</strong>
-            <span v-if="Array.isArray(item.menge) && item.menge.length > 0">
-              {{ item.menge.join(', ') }}
-            </span>
-            <span v-else class="text-muted">-</span>
-          </div>
-
-          <button
-            type="button"
-            class="btn btn-template"
-            :style="primaryButtonStyle"
-            @click="loadTemplate(item)"
-          >
-            {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
+          <button class="btn-template" @click="loadTemplate(item)">
+            {{ content.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
       </div>
 
-      <!-- Historie Pagination -->
-      <div v-if="historieItems.length > historieItemsPerPage" class="pagination">
-        <button
-          class="pagination-btn"
-          @click="goToHistoriePage(currentHistoriePage - 1)"
-          :disabled="currentHistoriePage === 1"
-        >
-          ‹ Zurück
-        </button>
-
-        <div class="pagination-numbers">
-          <button
-            v-for="page in getPageNumbers(currentHistoriePage, historieTotalPages)"
-            :key="page"
-            class="pagination-number"
-            :class="{ active: page === currentHistoriePage, ellipsis: page === '...' }"
-            @click="page !== '...' && goToHistoriePage(page)"
-            :disabled="page === '...'"
-          >
-            {{ page }}
-          </button>
-        </div>
-
-        <button
-          class="pagination-btn"
-          @click="goToHistoriePage(currentHistoriePage + 1)"
-          :disabled="currentHistoriePage === historieTotalPages"
-        >
-          Weiter ›
-        </button>
+      <!-- Pagination -->
+      <div v-if="totalHistPages > 1" class="pagination">
+        <button @click="histPage--" :disabled="histPage === 1">‹</button>
+        <span>{{ histPage }} / {{ totalHistPages }}</span>
+        <button @click="histPage++" :disabled="histPage === totalHistPages">›</button>
       </div>
     </div>
   </div>
@@ -325,988 +160,537 @@ export default {
   props: {
     uid: { type: String, required: true },
     content: { type: Object, required: true },
-    /* wwEditor:start */
-    wwEditorState: { type: Object, required: true },
-    /* wwEditor:end */
+    wwEditorState: { type: Object },
   },
   emits: ['trigger-event'],
   setup(props, { emit }) {
-    // Form data
-    const formData = ref({
+    // Form state
+    const form = ref({
       produkt_titel: '',
       produkt_beschreibung: '',
       menge: [0]
     });
 
-    // Status tracking
-    const isSubmitting = ref(false);
-    const statusMessage = ref('');
-    const statusType = ref(''); // 'success' or 'error'
+    const loading = ref(false);
+    const statusMsg = ref('');
+    const statusType = ref('');
 
-    // Historie tracking
-    const isLoadingHistorie = ref(false);
-    const historieError = ref('');
-    const historieItems = ref([]);
+    // Historie state
+    const historie = ref([]);
+    const loadingHist = ref(false);
     const searchQuery = ref('');
-    const searchDebounceTimer = ref(null);
+    const searchTimer = ref(null);
+    const histPage = ref(1);
 
-    // Favoriten tracking
-    const isLoadingFavoriten = ref(false);
-    const favoritenError = ref('');
-    const favoritenItems = ref([]);
-    const isTogglingFavorite = ref(false);
+    // Favoriten state
+    const favorites = ref([]);
+    const loadingFav = ref(false);
+    const favPage = ref(1);
 
-    // Pagination
-    const currentHistoriePage = ref(1);
-    const currentFavoritenPage = ref(1);
+    // Computed
+    const moduleStyle = computed(() => ({
+      '--bg': props.content.backgroundColor || '#fff',
+      '--border': props.content.borderColor || '#e0e0e0',
+      '--radius': props.content.borderRadius || '8px',
+      '--text': props.content.textColor || '#333',
+      '--label': props.content.labelColor || '#666',
+      '--primary': props.content.primaryButtonColor || '#007bff',
+      '--secondary': props.content.secondaryButtonColor || '#6c757d',
+    }));
 
-    // Internal variables for NoCode users
-    const { value: lastRequestData, setValue: setLastRequestData } =
-      wwLib.wwVariable.useComponentVariable({
-        uid: props.uid,
-        name: 'lastRequestData',
-        type: 'object',
-        defaultValue: {},
-      });
+    const itemsPerPage = computed(() => props.content.historieItemsPerPage || 10);
+    const favItemsPerPage = computed(() => props.content.favoritenItemsPerPage || 10);
 
-    const { value: requestCount, setValue: setRequestCount } =
-      wwLib.wwVariable.useComponentVariable({
-        uid: props.uid,
-        name: 'requestCount',
-        type: 'number',
-        defaultValue: 0,
-      });
-
-    // Computed properties
-    const layoutClass = computed(() => {
-      const showHistorie = props.content?.showHistorie;
-      const showFavoriten = props.content?.showFavoriten;
-      const position = props.content?.historiePosition || 'right';
-
-      if (showHistorie && showFavoriten) {
-        return 'layout-three';
-      } else if (showHistorie || showFavoriten) {
-        return `layout-${position}`;
-      }
-      return 'layout-single';
-    });
-
-    const historieItemsPerPage = computed(() => props.content?.historieItemsPerPage || 10);
-    const historieTotalPages = computed(() =>
-      Math.ceil(historieItems.value.length / historieItemsPerPage.value)
+    const totalHistPages = computed(() =>
+      Math.ceil(historie.value.length / itemsPerPage.value)
     );
 
-    const displayedHistorieItems = computed(() => {
-      const start = (currentHistoriePage.value - 1) * historieItemsPerPage.value;
-      const end = start + historieItemsPerPage.value;
-      return historieItems.value.slice(start, end);
-    });
-
-    const favoritenItemsPerPage = computed(() => props.content?.favoritenItemsPerPage || 10);
-    const favoritenTotalPages = computed(() =>
-      Math.ceil(favoritenItems.value.length / favoritenItemsPerPage.value)
+    const totalFavPages = computed(() =>
+      Math.ceil(favorites.value.length / favItemsPerPage.value)
     );
 
-    const displayedFavoritenItems = computed(() => {
-      const start = (currentFavoritenPage.value - 1) * favoritenItemsPerPage.value;
-      const end = start + favoritenItemsPerPage.value;
-      return favoritenItems.value.slice(start, end);
+    const paginatedHistorie = computed(() => {
+      const start = (histPage.value - 1) * itemsPerPage.value;
+      return historie.value.slice(start, start + itemsPerPage.value);
     });
 
-    // Computed styles
-    const containerStyle = computed(() => ({
-      '--bg-color': props.content?.backgroundColor || '#ffffff',
-      '--border-color': props.content?.borderColor || '#e0e0e0',
-      '--border-radius': props.content?.borderRadius || '8px',
-      '--text-color': props.content?.textColor || '#333333',
-    }));
+    const paginatedFavorites = computed(() => {
+      const start = (favPage.value - 1) * favItemsPerPage.value;
+      return favorites.value.slice(start, start + favItemsPerPage.value);
+    });
 
-    const inputStyle = computed(() => ({
-      borderColor: props.content?.borderColor || '#e0e0e0',
-      color: props.content?.textColor || '#333333',
-    }));
-
-    const primaryButtonStyle = computed(() => ({
-      backgroundColor: props.content?.primaryButtonColor || '#007bff',
-      borderColor: props.content?.primaryButtonColor || '#007bff',
-    }));
-
-    const secondaryButtonStyle = computed(() => ({
-      backgroundColor: props.content?.secondaryButtonColor || '#6c757d',
-      borderColor: props.content?.secondaryButtonColor || '#6c757d',
-    }));
-
-    const removeButtonStyle = computed(() => ({
-      backgroundColor: props.content?.removeButtonColor || '#dc3545',
-      borderColor: props.content?.removeButtonColor || '#dc3545',
-    }));
-
-    const addButtonStyle = computed(() => ({
-      backgroundColor: props.content?.addButtonColor || '#28a745',
-      borderColor: props.content?.addButtonColor || '#28a745',
-    }));
-
-    // Auflage management
-    const addAuflage = () => {
-      const maxAuflagen = props.content?.maxAuflagen || 10;
-      if (formData.value.menge.length < maxAuflagen) {
-        formData.value.menge.push(0);
-      }
-    };
-
-    const removeAuflage = (index) => {
-      const minAuflagen = props.content?.minAuflagen || 1;
-      if (formData.value.menge.length > minAuflagen) {
-        formData.value.menge.splice(index, 1);
-      }
-    };
-
-    // Load Historie from API
-    const loadHistorie = async () => {
-      if (!props.content?.showHistorie) return;
-
-      isLoadingHistorie.value = true;
-      historieError.value = '';
-
-      try {
-        const endpoint = props.content?.historieEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
-
-        const response = await fetch(endpoint, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        historieItems.value = Array.isArray(data) ? data : [];
-
-        // Reset to first page when data changes
-        currentHistoriePage.value = 1;
-
-        // Emit historie-loaded event
-        emit('trigger-event', {
-          name: 'historie-loaded',
-          event: {
-            count: historieItems.value.length,
-            items: historieItems.value,
-          },
-        });
-
-      } catch (error) {
-        historieError.value = 'Fehler beim Laden der Historie';
-        console.error('Historie loading error:', error);
-      } finally {
-        isLoadingHistorie.value = false;
-      }
-    };
-
-    // Search Historie
-    const performSearch = async (query) => {
-      if (!props.content?.showHistorie) return;
-
-      if (!query || query.trim() === '') {
-        await loadHistorie();
+    // API calls
+    const submitForm = async () => {
+      if (!props.content.userId) {
+        showStatus('User ID fehlt', 'error');
         return;
       }
 
-      isLoadingHistorie.value = true;
-      historieError.value = '';
+      loading.value = true;
+      statusMsg.value = '';
 
       try {
-        const endpoint = props.content?.historieSearchEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search';
+        const url = props.content.apiEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
 
-        const response = await fetch(`${endpoint}?q=${encodeURIComponent(query.trim())}`, {
-          method: 'GET',
+        const res = await fetch(url, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: parseInt(props.content.userId),
+            produkt_titel: form.value.produkt_titel,
+            produkt_beschreibung: form.value.produkt_beschreibung,
+            menge: form.value.menge.filter(m => m > 0),
+          }),
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!res.ok) throw new Error('Fehler beim Senden');
 
-        const data = await response.json();
-        historieItems.value = Array.isArray(data) ? data : [];
-        currentHistoriePage.value = 1;
+        const data = await res.json();
+
+        showStatus(props.content.successMessage || 'Erfolgreich gesendet!', 'success');
+
+        emit('trigger-event', {
+          name: 'submit-success',
+          event: { ...form.value, response: data },
+        });
+
+        setTimeout(() => {
+          resetForm();
+          loadHistorie();
+        }, 2000);
+
+      } catch (err) {
+        showStatus(props.content.errorMessage || 'Fehler beim Senden', 'error');
+        emit('trigger-event', { name: 'submit-error', event: { error: err.message } });
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const loadHistorie = async () => {
+      if (!props.content.showHistorie) return;
+
+      loadingHist.value = true;
+
+      try {
+        const url = props.content.historieEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Load failed');
+
+        const data = await res.json();
+        historie.value = Array.isArray(data) ? data : [];
+        histPage.value = 1;
+
+        emit('trigger-event', {
+          name: 'historie-loaded',
+          event: { count: historie.value.length, items: historie.value },
+        });
+
+      } catch (err) {
+        historie.value = [];
+      } finally {
+        loadingHist.value = false;
+      }
+    };
+
+    const searchHistorie = async (query) => {
+      if (!query) {
+        loadHistorie();
+        return;
+      }
+
+      loadingHist.value = true;
+
+      try {
+        const url = props.content.historieSearchEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search';
+
+        const res = await fetch(`${url}?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error('Search failed');
+
+        const data = await res.json();
+        historie.value = Array.isArray(data) ? data : [];
+        histPage.value = 1;
 
         emit('trigger-event', {
           name: 'historie-searched',
-          event: {
-            query: query.trim(),
-            count: historieItems.value.length,
-            items: historieItems.value,
-          },
+          event: { query, count: historie.value.length, items: historie.value },
         });
 
-      } catch (error) {
-        historieError.value = 'Fehler beim Durchsuchen der Historie';
+      } catch (err) {
+        historie.value = [];
       } finally {
-        isLoadingHistorie.value = false;
+        loadingHist.value = false;
       }
     };
 
-    // Handle search input with debounce
-    const handleSearchInput = () => {
-      // Clear existing timer
-      if (searchDebounceTimer.value) {
-        clearTimeout(searchDebounceTimer.value);
-      }
-
-      // Set new timer for 500ms debounce
-      searchDebounceTimer.value = setTimeout(() => {
-        performSearch(searchQuery.value);
-      }, 500);
-    };
-
-    // Clear search
-    const clearSearch = () => {
-      searchQuery.value = '';
-      loadHistorie();
-    };
-
-    // Load Favoriten from API
-    const loadFavoriten = async () => {
-      if (!props.content?.showFavoriten) return;
-
-      const userId = props.content?.userId;
-      if (!userId) {
-        favoritenItems.value = [];
+    const loadFavorites = async () => {
+      if (!props.content.showFavoriten || !props.content.userId) {
+        favorites.value = [];
         return;
       }
 
-      isLoadingFavoriten.value = true;
-      favoritenError.value = '';
+      loadingFav.value = true;
 
       try {
-        const endpoint = props.content?.favoritenListEndpoint ||
+        const url = props.content.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list';
 
-        const url = `${endpoint}?user_id=${parseInt(userId)}`;
+        const res = await fetch(`${url}?user_id=${parseInt(props.content.userId)}&page=1&per_page=100`);
+        if (!res.ok) throw new Error('Load failed');
 
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        favoritenItems.value = Array.isArray(data) ? data : [];
-        currentFavoritenPage.value = 1;
+        const data = await res.json();
+        favorites.value = Array.isArray(data.favorites) ? data.favorites :
+                         Array.isArray(data) ? data : [];
+        favPage.value = 1;
 
         emit('trigger-event', {
           name: 'favoriten-loaded',
-          event: {
-            count: favoritenItems.value.length,
-            items: favoritenItems.value,
-          },
+          event: { count: favorites.value.length, items: favorites.value },
         });
 
-      } catch (error) {
-        favoritenError.value = 'Fehler beim Laden der Favoriten';
-        favoritenItems.value = [];
+      } catch (err) {
+        favorites.value = [];
       } finally {
-        isLoadingFavoriten.value = false;
+        loadingFav.value = false;
       }
     };
 
-    // Check if item is favorite
-    const isFavorite = (anfrageId) => {
-      return favoritenItems.value.some(
-        fav => fav.product_beschreibung_anfrage_id === anfrageId
-      );
-    };
+    const toggleFavorite = async (anfrageId) => {
+      if (!props.content.userId) return;
 
-    // Get favorit ID by anfrage ID
-    const getFavoritId = (anfrageId) => {
-      const favorit = favoritenItems.value.find(
-        fav => fav.product_beschreibung_anfrage_id === anfrageId
-      );
-      return favorit?.id || null;
-    };
-
-    // Toggle favorite (add or remove)
-    const toggleFavorite = async (item) => {
-      const userId = props.content?.userId;
-      if (!userId) return;
-
-      isTogglingFavorite.value = true;
-
-      try {
-        if (isFavorite(item.id)) {
-          // Remove from favorites
-          const favoritId = getFavoritId(item.id);
-          if (!favoritId) throw new Error('Favorit ID nicht gefunden');
-
-          const endpoint = props.content?.favoritenDeleteEndpoint ||
-            'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
-
-          const response = await fetch(`${endpoint}?id=${favoritId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-          favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favoritId);
-
-          emit('trigger-event', {
-            name: 'favorite-removed',
-            event: { favorit_id: favoritId, anfrage_id: item.id },
-          });
-
-        } else {
-          // Add to favorites
-          const endpoint = props.content?.favoritenAddEndpoint ||
-            'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: parseInt(userId),
-              product_beschreibung_anfrage_id: item.id,
-            }),
-          });
-
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-          await loadFavoriten();
-
-          emit('trigger-event', {
-            name: 'favorite-added',
-            event: { favorit_id: 0, anfrage_id: item.id },
-          });
-        }
-
-      } catch (error) {
-        statusMessage.value = 'Fehler beim Aktualisieren der Favoriten';
-        statusType.value = 'error';
-        setTimeout(() => {
-          statusMessage.value = '';
-          statusType.value = '';
-        }, 3000);
-      } finally {
-        isTogglingFavorite.value = false;
+      if (isFavorite(anfrageId)) {
+        const fav = favorites.value.find(f => f.product_beschreibung_anfrage_id === anfrageId);
+        if (fav) await removeFavorite(fav.id);
+      } else {
+        await addFavorite(anfrageId);
       }
     };
 
-    // Remove favorite
-    const removeFavorite = async (favorit) => {
-      if (!props.content?.userId) return;
-
-      isTogglingFavorite.value = true;
-
+    const addFavorite = async (anfrageId) => {
       try {
-        const endpoint = props.content?.favoritenDeleteEndpoint ||
+        const url = props.content.favoritenAddEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_beschreibung_anfrage_id: anfrageId,
+          }),
+        });
+
+        if (!res.ok) throw new Error('Add failed');
+
+        await loadFavorites();
+
+        emit('trigger-event', {
+          name: 'favorite-added',
+          event: { anfrage_id: anfrageId },
+        });
+
+      } catch (err) {
+        showStatus('Fehler beim Hinzufügen', 'error');
+      }
+    };
+
+    const removeFavorite = async (favId) => {
+      try {
+        const url = props.content.favoritenDeleteEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
 
-        const response = await fetch(`${endpoint}?id=${favorit.id}`, {
+        const res = await fetch(`${url}?id=${favId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!res.ok) throw new Error('Delete failed');
 
-        favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favorit.id);
+        favorites.value = favorites.value.filter(f => f.id !== favId);
 
         emit('trigger-event', {
           name: 'favorite-removed',
-          event: {
-            favorit_id: favorit.id,
-            anfrage_id: favorit.product_beschreibung_anfrage_id,
-          },
+          event: { favorit_id: favId },
         });
 
-      } catch (error) {
-        statusMessage.value = 'Fehler beim Entfernen des Favoriten';
-        statusType.value = 'error';
-        setTimeout(() => {
-          statusMessage.value = '';
-          statusType.value = '';
-        }, 3000);
-      } finally {
-        isTogglingFavorite.value = false;
+      } catch (err) {
+        showStatus('Fehler beim Entfernen', 'error');
       }
     };
 
-    // Load template from historie item
+    const isFavorite = (anfrageId) => {
+      return favorites.value.some(f => f.product_beschreibung_anfrage_id === anfrageId);
+    };
+
     const loadTemplate = (item) => {
-      formData.value = {
+      form.value = {
         produkt_titel: item.produkt_titel || '',
         produkt_beschreibung: item.produkt_beschreibung || '',
         menge: Array.isArray(item.menge) && item.menge.length > 0 ? [...item.menge] : [0]
       };
 
-      statusMessage.value = 'Vorlage geladen!';
-      statusType.value = 'success';
+      showStatus('Vorlage geladen!', 'success');
 
-      // Emit template-loaded event
       emit('trigger-event', {
         name: 'template-loaded',
-        event: {
-          produkt_titel: formData.value.produkt_titel,
-          produkt_beschreibung: formData.value.produkt_beschreibung,
-          menge: formData.value.menge,
-        },
-      });
-
-      // Clear message after 2 seconds
-      setTimeout(() => {
-        if (statusMessage.value === 'Vorlage geladen!') {
-          statusMessage.value = '';
-          statusType.value = '';
-        }
-      }, 2000);
-    };
-
-    // Handle form submission
-    const handleSubmit = async () => {
-      isSubmitting.value = true;
-      statusMessage.value = '';
-      statusType.value = '';
-
-      try {
-        const userId = props.content?.userId;
-        if (!userId) {
-          throw new Error('User ID fehlt');
-        }
-
-        const endpoint = props.content?.apiEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
-
-        // Create JSON payload
-        const payload = {
-          user_id: parseInt(userId),
-          produkt_titel: formData.value.produkt_titel,
-          produkt_beschreibung: formData.value.produkt_beschreibung,
-          menge: formData.value.menge.filter(m => m > 0), // Remove zeros
-        };
-
-        // Make API call
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-
-        // Update internal variables
-        setLastRequestData(payload);
-        setRequestCount(requestCount.value + 1);
-
-        // Show success message
-        statusMessage.value = props.content?.successMessage || 'Anfrage erfolgreich gesendet!';
-        statusType.value = 'success';
-
-        // Emit success event
-        emit('trigger-event', {
-          name: 'submit-success',
-          event: {
-            produkt_titel: payload.produkt_titel,
-            produkt_beschreibung: payload.produkt_beschreibung,
-            menge: payload.menge,
-            response: responseData,
-          },
-        });
-
-        // Reload historie and reset form after success
-        setTimeout(async () => {
-          await loadHistorie();
-          handleReset();
-        }, 2000);
-
-      } catch (error) {
-        // Show error message
-        statusMessage.value = props.content?.errorMessage || 'Fehler beim Senden der Anfrage';
-        statusType.value = 'error';
-
-        // Emit error event
-        emit('trigger-event', {
-          name: 'submit-error',
-          event: {
-            error: error.message,
-          },
-        });
-
-        console.error('Submission error:', error);
-      } finally {
-        isSubmitting.value = false;
-      }
-    };
-
-    // Handle form reset
-    const handleReset = () => {
-      formData.value = {
-        produkt_titel: '',
-        produkt_beschreibung: '',
-        menge: [0],
-      };
-      statusMessage.value = '';
-      statusType.value = '';
-
-      // Emit reset event
-      emit('trigger-event', {
-        name: 'form-reset',
-        event: {},
+        event: { ...form.value },
       });
     };
 
-    // Format date helper
-    const formatDate = (dateString) => {
-      if (!dateString) return '';
+    const resetForm = () => {
+      form.value = { produkt_titel: '', produkt_beschreibung: '', menge: [0] };
+      statusMsg.value = '';
+      emit('trigger-event', { name: 'form-reset', event: {} });
+    };
+
+    const showStatus = (msg, type) => {
+      statusMsg.value = msg;
+      statusType.value = type;
+      setTimeout(() => { statusMsg.value = ''; }, 3000);
+    };
+
+    const onSearch = () => {
+      if (searchTimer.value) clearTimeout(searchTimer.value);
+      searchTimer.value = setTimeout(() => {
+        searchHistorie(searchQuery.value.trim());
+      }, 500);
+    };
+
+    const clearSearch = () => {
+      searchQuery.value = '';
+      loadHistorie();
+    };
+
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
       try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('de-DE', {
+        return new Date(dateStr).toLocaleDateString('de-DE', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
         });
-      } catch (error) {
-        return dateString;
+      } catch {
+        return dateStr;
       }
     };
 
-    // Pagination helpers
-    const goToHistoriePage = (page) => {
-      if (page >= 1 && page <= historieTotalPages.value) {
-        currentHistoriePage.value = page;
+    const formatMenge = (menge) => {
+      if (Array.isArray(menge) && menge.length > 0) {
+        return menge.join(', ');
       }
+      return '-';
     };
 
-    const goToFavoritenPage = (page) => {
-      if (page >= 1 && page <= favoritenTotalPages.value) {
-        currentFavoritenPage.value = page;
-      }
-    };
+    // Watchers
+    watch(() => props.content.userId, () => {
+      if (props.content.showFavoriten) loadFavorites();
+    });
 
-    const getPageNumbers = (currentPage, totalPages) => {
-      const pages = [];
-      const maxVisible = 5;
-
-      if (totalPages <= maxVisible) {
-        for (let i = 1; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        if (currentPage <= 3) {
-          for (let i = 1; i <= 4; i++) pages.push(i);
-          pages.push('...');
-          pages.push(totalPages);
-        } else if (currentPage >= totalPages - 2) {
-          pages.push(1);
-          pages.push('...');
-          for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-        } else {
-          pages.push(1);
-          pages.push('...');
-          for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-          pages.push('...');
-          pages.push(totalPages);
-        }
-      }
-
-      return pages;
-    };
-
-    // Watch for showHistorie changes
-    watch(
-      () => props.content?.showHistorie,
-      (newValue) => {
-        if (newValue) {
-          loadHistorie();
-        }
-      },
-      { immediate: false }
-    );
-
-    // Watch for style changes (for reactivity)
-    watch(
-      () => [
-        props.content?.backgroundColor,
-        props.content?.borderColor,
-        props.content?.borderRadius,
-        props.content?.textColor,
-        props.content?.labelColor,
-        props.content?.primaryButtonColor,
-        props.content?.secondaryButtonColor,
-        props.content?.removeButtonColor,
-        props.content?.addButtonColor,
-        props.content?.historiePosition,
-      ],
-      () => {
-        // Styles automatically update via computed properties
-      },
-      { deep: true }
-    );
-
-    // Watch for userId changes to reload favoriten
-    watch(
-      () => props.content?.userId,
-      (newValue) => {
-        if (newValue && props.content?.showFavoriten) {
-          loadFavoriten();
-        }
-      }
-    );
-
-    // Load historie and favoriten on mount
+    // Lifecycle
     onMounted(() => {
-      if (props.content?.showHistorie) {
-        loadHistorie();
-      }
-      if (props.content?.showFavoriten) {
-        loadFavoriten();
-      }
+      if (props.content.showHistorie) loadHistorie();
+      if (props.content.showFavoriten) loadFavorites();
     });
 
     return {
-      formData,
-      isSubmitting,
-      statusMessage,
+      form,
+      loading,
+      statusMsg,
       statusType,
-      isLoadingHistorie,
-      historieError,
-      historieItems,
-      displayedHistorieItems,
+      historie,
+      loadingHist,
       searchQuery,
-      isLoadingFavoriten,
-      favoritenError,
-      favoritenItems,
-      displayedFavoritenItems,
-      isTogglingFavorite,
-      currentHistoriePage,
-      currentFavoritenPage,
-      historieTotalPages,
-      favoritenTotalPages,
-      historieItemsPerPage,
-      favoritenItemsPerPage,
-      layoutClass,
-      containerStyle,
-      inputStyle,
-      primaryButtonStyle,
-      secondaryButtonStyle,
-      removeButtonStyle,
-      addButtonStyle,
-      addAuflage,
-      removeAuflage,
+      histPage,
+      totalHistPages,
+      paginatedHistorie,
+      favorites,
+      loadingFav,
+      favPage,
+      totalFavPages,
+      paginatedFavorites,
+      moduleStyle,
+      submitForm,
+      resetForm,
       loadTemplate,
-      handleSubmit,
-      handleReset,
-      formatDate,
-      isFavorite,
       toggleFavorite,
       removeFavorite,
-      goToHistoriePage,
-      goToFavoritenPage,
-      getPageNumbers,
-      handleSearchInput,
+      isFavorite,
+      onSearch,
       clearSearch,
+      formatDate,
+      formatMenge,
     };
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .anfrage-module {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 24px;
-  color: var(--text-color);
-  max-width: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
+  color: var(--text);
+  display: grid;
+  grid-template-columns: 1fr 350px 350px;
   gap: 24px;
+}
 
-  &.layout-single {
-    flex-direction: column;
-
-    .form-section {
-      width: 100%;
-    }
-  }
-
-  &.layout-right {
-    flex-direction: row;
-    align-items: flex-start;
-
-    .form-section {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .historie-section {
-      flex: 0 0 400px;
-      max-width: 400px;
-    }
-  }
-
-  &.layout-bottom {
-    flex-direction: column;
-
-    .form-section,
-    .historie-section {
-      width: 100%;
-    }
-  }
-
-  &.layout-three {
-    flex-direction: row;
-    align-items: flex-start;
-
-    .form-section {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .historie-section,
-    .favoriten-section {
-      flex: 0 0 350px;
-      max-width: 350px;
-    }
+@media (max-width: 1200px) {
+  .anfrage-module {
+    grid-template-columns: 1fr;
   }
 }
 
-.form-section,
-.historie-section,
-.favoriten-section {
+.section {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .section-title {
-  margin: 0 0 20px 0;
+  margin: 0 0 12px;
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-color);
-  border-bottom: 3px solid var(--border-color);
-  padding-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
 }
 
-.form-content {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 6px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  label {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0;
-  }
+.field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--label);
 }
 
-.form-input,
-.form-textarea {
-  width: 100%;
+.field input,
+.field textarea {
   padding: 10px 12px;
   font-size: 14px;
-  border: 1px solid;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #ffffff;
   font-family: inherit;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-  }
-
-  &::placeholder {
-    color: #999999;
-  }
 }
 
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-// Auflagen Array Inputs
-.auflagen-list {
+.auflagen {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.auflage-item {
+.auflage-row {
   display: flex;
   gap: 8px;
-  align-items: center;
-
-  .auflage-input {
-    flex: 1;
-  }
-
-  .btn-remove {
-    flex: 0 0 auto;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
 }
 
-.status-message {
+.auflage-row input {
+  flex: 1;
+}
+
+.btn-remove {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.btn-add {
+  padding: 10px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status {
   padding: 12px 16px;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
-
-  &.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  &.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
 }
 
-.form-actions {
+.status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.actions {
   display: flex;
   gap: 12px;
-  margin-top: 8px;
 }
 
-.btn {
+.btn-primary,
+.btn-secondary {
+  flex: 1;
   padding: 12px 24px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #ffffff;
-
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  color: white;
 }
 
 .btn-primary {
-  flex: 1;
+  background: var(--primary);
 }
 
 .btn-secondary {
-  flex: 1;
+  background: var(--secondary);
 }
 
-.btn-add {
-  width: 100%;
-  margin-top: 4px;
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-template {
-  width: 100%;
-  font-size: 13px;
-  padding: 10px 16px;
-  font-weight: 500;
-}
-
-.btn-heart,
-.btn-heart-filled {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  background: transparent;
-  border: none;
-  flex-shrink: 0;
-  cursor: pointer;
-  border-radius: 50%;
-  transition: all 0.2s;
-
-  &:hover:not(:disabled) {
-    background-color: rgba(255, 0, 0, 0.1);
-    transform: scale(1.2);
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(1.1);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-// Search Container
-.search-container {
+.search {
   position: relative;
-  margin-bottom: 16px;
 }
 
-.search-input {
+.search input {
   width: 100%;
   padding: 10px 40px 10px 12px;
-  font-size: 14px;
-  border: 1px solid;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #ffffff;
-  font-family: inherit;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-  }
-
-  &::placeholder {
-    color: #999999;
-  }
+  font-size: 14px;
 }
 
-.search-clear-btn {
+.btn-clear {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -1314,87 +698,52 @@ export default {
   width: 24px;
   height: 24px;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
   background: transparent;
   border: none;
-  color: #999;
   cursor: pointer;
+  color: #999;
   border-radius: 50%;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: #333;
-  }
-
-  &:active {
-    transform: translateY(-50%) scale(0.95);
-  }
 }
 
-// Historie Section
-.historie-loading,
-.historie-error,
-.historie-empty {
+.btn-clear:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.empty {
   padding: 20px;
   text-align: center;
-  color: #666;
-  font-size: 14px;
-  border: 1px dashed var(--border-color);
+  color: #999;
+  border: 1px dashed var(--border);
   border-radius: 4px;
 }
 
-.historie-error {
-  color: #dc3545;
-  background-color: #f8d7da;
-}
-
-.historie-list {
+.items {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 700px;
+  gap: 12px;
+  max-height: 600px;
   overflow-y: auto;
-  padding-right: 6px;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f5f5f5;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #bbb;
-    border-radius: 4px;
-
-    &:hover {
-      background: #999;
-    }
-  }
 }
 
-.historie-item {
-  background-color: #ffffff;
-  border: 1px solid var(--border-color);
+.item {
+  background: #fff;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #007bff;
-    transform: translateY(-2px);
-  }
 }
 
-.historie-item-header {
+.item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.favorite-item {
+  background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
+  border: 2px solid #ffd700;
+}
+
+.item-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1402,314 +751,94 @@ export default {
   margin-bottom: 8px;
 }
 
-.historie-item-title {
+.item-header h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-color);
   flex: 1;
-  word-break: break-word;
-  line-height: 1.3;
 }
 
-.historie-item-meta {
-  margin-bottom: 8px;
+.btn-heart {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-.historie-item-date {
+.btn-heart:hover {
+  background: rgba(255, 0, 0, 0.1);
+  transform: scale(1.2);
+}
+
+.date {
   font-size: 11px;
   color: #999;
-  background-color: #f5f5f5;
+  background: #f5f5f5;
   padding: 2px 8px;
   border-radius: 3px;
   display: inline-block;
-}
-
-.historie-item-description {
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  color: #666;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.historie-item-menge {
-  font-size: 12px;
-  color: #555;
-  margin-bottom: 12px;
-  background-color: #f9f9f9;
-  padding: 6px 10px;
-  border-radius: 4px;
-  border-left: 3px solid #007bff;
-
-  strong {
-    font-weight: 600;
-    margin-right: 6px;
-  }
-
-  .text-muted {
-    color: #999;
-    font-style: italic;
-  }
-}
-
-// Favoriten Section
-.favoriten-loading,
-.favoriten-error,
-.favoriten-empty {
-  padding: 20px;
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-  border: 1px dashed var(--border-color);
-  border-radius: 4px;
-}
-
-.favoriten-error {
-  color: #dc3545;
-  background-color: #f8d7da;
-}
-
-.favoriten-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 700px;
-  overflow-y: auto;
-  padding-right: 6px;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f5f5f5;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #ffd700;
-    border-radius: 4px;
-
-    &:hover {
-      background: #ffb700;
-    }
-  }
-}
-
-.favoriten-item {
-  background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
-  border: 2px solid #ffd700;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.2);
-
-  &:hover {
-    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
-    border-color: #ffb700;
-    transform: translateY(-2px);
-  }
-}
-
-.favoriten-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
   margin-bottom: 8px;
 }
 
-.favoriten-item-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-color);
-  flex: 1;
-  word-break: break-word;
-  line-height: 1.3;
-}
-
-.favoriten-item-description {
-  margin: 0 0 10px 0;
+.item p {
+  margin: 0 0 10px;
   font-size: 13px;
   color: #666;
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.favoriten-item-menge {
+.meta {
   font-size: 12px;
   color: #555;
-  margin-bottom: 12px;
-  background-color: rgba(255, 255, 255, 0.6);
   padding: 6px 10px;
+  background: #f9f9f9;
   border-radius: 4px;
-  border-left: 3px solid #ffd700;
-
-  strong {
-    font-weight: 600;
-    margin-right: 6px;
-  }
-
-  .text-muted {
-    color: #999;
-    font-style: italic;
-  }
+  border-left: 3px solid var(--primary);
+  margin-bottom: 12px;
 }
 
-// Pagination
+.btn-template {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
-.pagination-btn {
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: var(--text-color);
+.pagination button {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    background-color: #f5f5f5;
-    border-color: #007bff;
-    color: #007bff;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    background-color: #f9f9f9;
-  }
-}
-
-.pagination-numbers {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.pagination-number {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 8px;
   font-size: 14px;
-  font-weight: 500;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: var(--text-color);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover:not(:disabled):not(.ellipsis) {
-    background-color: #f5f5f5;
-    border-color: #007bff;
-    color: #007bff;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
-  }
-
-  &.active {
-    background-color: #007bff;
-    border-color: #007bff;
-    color: #ffffff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-  }
-
-  &.ellipsis {
-    border: none;
-    background: transparent;
-    cursor: default;
-    font-weight: bold;
-    color: #999;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 }
 
-// Responsive design
-@media (max-width: 1024px) {
-  .anfrage-module.layout-right,
-  .anfrage-module.layout-three {
-    flex-direction: column;
-
-    .historie-section,
-    .favoriten-section {
-      flex: 1;
-      max-width: 100%;
-    }
-  }
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
-  .anfrage-module {
-    padding: 16px;
-    gap: 20px;
-  }
-
-  .section-title {
-    font-size: 18px;
-  }
-
-  .form-actions {
-    flex-direction: column;
-
-    .btn {
-      width: 100%;
-    }
-  }
-
-  .historie-list {
-    max-height: 400px;
-  }
-
-  .historie-item-header {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .historie-item-date {
-    align-self: flex-start;
-  }
-
-  .pagination {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .pagination-btn {
-    width: 100%;
-  }
-
-  .pagination-numbers {
-    width: 100%;
-    justify-content: center;
-  }
+.pagination span {
+  font-size: 14px;
+  color: var(--text);
 }
 </style>
