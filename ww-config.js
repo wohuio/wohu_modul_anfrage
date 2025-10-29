@@ -113,6 +113,19 @@ export default {
       },
       /* wwEditor:end */
     },
+    produktDetailEndpoint: {
+      label: { en: "Produkt Detail Endpoint (GET)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for fetching single product details by ID (append /{id})",
+      },
+      /* wwEditor:end */
+    },
 
     // Layout Configuration
     showHistorie: {

@@ -426,14 +426,16 @@ export default {
       loadingFav.value = true;
 
       try {
-        const url = props.content.favoritenListEndpoint ||
+        // Step 1: Load favorites list (IDs only)
+        const listUrl = props.content.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list_id';
 
-        const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}`;
-        console.log('Loading favorites:', fullUrl);
+        const fullUrl = `${listUrl}?user_id=${parseInt(props.content.userId)}`;
+        console.log('=== Loading favorites (Step 1) ===');
+        console.log('URL:', fullUrl);
 
         const res = await fetch(fullUrl);
-        console.log('Load favorites response:', res.status, res.statusText);
+        console.log('Response:', res.status, res.statusText);
 
         if (!res.ok) {
           const errorText = await res.text().catch(() => '');
@@ -443,38 +445,82 @@ export default {
             body: errorText,
             url: fullUrl
           });
-
-          // Try to parse error as JSON
-          try {
-            const errorJson = JSON.parse(errorText);
-            console.error('Load favorites error details:', errorJson);
-          } catch (e) {
-            console.error('Error response is not JSON:', errorText);
-          }
-
           throw new Error('Load failed');
         }
 
         const data = await res.json();
-        console.log('Favorites data:', data);
-        console.log('Favorites data type:', typeof data, Array.isArray(data));
-        console.log('Favorites data keys:', Object.keys(data));
+        console.log('Favorites list data:', data);
 
-        // Handle different response structures
-        favorites.value = Array.isArray(data) ? data :
-                         Array.isArray(data.favorites) ? data.favorites :
-                         Array.isArray(data.items) ? data.items : [];
+        // Extract favorites array
+        const favList = Array.isArray(data) ? data :
+                       Array.isArray(data.favorites) ? data.favorites :
+                       Array.isArray(data.items) ? data.items : [];
 
-        console.log('Favorites loaded:', favorites.value.length, 'items');
+        console.log('Found', favList.length, 'favorites');
 
-        // Log first item structure for debugging
-        if (favorites.value.length > 0) {
-          const firstItem = favorites.value[0];
-          console.log('First favorite item structure:', firstItem);
-          console.log('Keys in first item:', Object.keys(firstItem));
-          console.log('First item details:', JSON.stringify(firstItem, null, 2));
+        if (favList.length === 0) {
+          favorites.value = [];
+          favPage.value = 1;
+          emit('trigger-event', {
+            name: 'favoriten-loaded',
+            event: { count: 0, items: [] },
+          });
+          return;
         }
 
+        // Step 2: Load product details for each favorite
+        const detailEndpoint = props.content.produktDetailEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
+
+        console.log('=== Loading product details (Step 2) ===');
+        console.log('Detail endpoint:', detailEndpoint);
+
+        // Create array of promises to load all product details in parallel
+        const productRequests = favList.map(async (fav) => {
+          const productId = fav.product_beschreibung_anfrage_id;
+          if (!productId) {
+            console.warn('Favorite has no product_beschreibung_anfrage_id:', fav);
+            return { ...fav, product_beschreibung_anfrage: null };
+          }
+
+          try {
+            const productUrl = `${detailEndpoint}/${productId}`;
+            console.log('Fetching product:', productUrl);
+
+            const productRes = await fetch(productUrl);
+
+            if (!productRes.ok) {
+              console.error('Failed to load product', productId, ':', productRes.status);
+              return { ...fav, product_beschreibung_anfrage: null };
+            }
+
+            const productData = await productRes.json();
+            console.log('Product', productId, 'loaded:', productData);
+
+            // Merge product data into favorite
+            return {
+              ...fav,
+              product_beschreibung_anfrage: productData
+            };
+
+          } catch (err) {
+            console.error('Error loading product', productId, ':', err);
+            return { ...fav, product_beschreibung_anfrage: null };
+          }
+        });
+
+        // Wait for all product requests to complete
+        const enrichedFavorites = await Promise.all(productRequests);
+
+        console.log('=== All product details loaded ===');
+        console.log('Enriched favorites:', enrichedFavorites);
+
+        // Log first enriched item for debugging
+        if (enrichedFavorites.length > 0) {
+          console.log('First enriched favorite:', JSON.stringify(enrichedFavorites[0], null, 2));
+        }
+
+        favorites.value = enrichedFavorites;
         favPage.value = 1;
 
         emit('trigger-event', {
