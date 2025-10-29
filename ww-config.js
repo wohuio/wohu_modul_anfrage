@@ -23,7 +23,7 @@ export default {
 
     // API Configuration
     apiEndpoint: {
-      label: { en: "API Endpoint" },
+      label: { en: "API Endpoint (POST)" },
       type: "Text",
       section: "settings",
       defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage",
@@ -31,9 +31,87 @@ export default {
       /* wwEditor:start */
       bindingValidation: {
         type: "string",
-        tooltip: "Xano API endpoint URL",
+        tooltip: "Xano API endpoint URL for creating requests",
       },
       /* wwEditor:end */
+    },
+    historieEndpoint: {
+      label: { en: "Historie Endpoint (GET)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for fetching history",
+      },
+      /* wwEditor:end */
+    },
+
+    // Layout Configuration
+    showHistorie: {
+      label: { en: "Show Historie" },
+      type: "OnOff",
+      section: "settings",
+      defaultValue: true,
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "boolean",
+        tooltip: "Show or hide the history section",
+      },
+      /* wwEditor:end */
+    },
+    historiePosition: {
+      label: { en: "Historie Position" },
+      type: "TextSelect",
+      section: "settings",
+      options: {
+        options: [
+          { value: "right", label: "Right Side" },
+          { value: "bottom", label: "Bottom" },
+        ],
+      },
+      defaultValue: "right",
+      bindable: true,
+      hidden: (content) => !content?.showHistorie,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Valid values: right | bottom",
+      },
+      /* wwEditor:end */
+    },
+    historieTitle: {
+      label: { en: "Historie Title" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Vergangene Anfragen",
+      bindable: true,
+      hidden: (content) => !content?.showHistorie,
+    },
+    maxHistorieItems: {
+      label: { en: "Max Historie Items" },
+      type: "Number",
+      section: "settings",
+      defaultValue: 10,
+      bindable: true,
+      hidden: (content) => !content?.showHistorie,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "number",
+        tooltip: "Maximum number of history items to display",
+      },
+      /* wwEditor:end */
+    },
+    loadTemplateButtonText: {
+      label: { en: "Load Template Button Text" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Als Vorlage laden",
+      bindable: true,
+      hidden: (content) => !content?.showHistorie,
     },
 
     // Form Field Labels
@@ -55,8 +133,55 @@ export default {
       label: { en: "Auflage Label" },
       type: "Text",
       section: "settings",
-      defaultValue: "Auflage",
+      defaultValue: "Auflagen",
       bindable: true,
+    },
+    addAuflageButtonText: {
+      label: { en: "Add Auflage Button Text" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "+ Auflage hinzufügen",
+      bindable: true,
+    },
+    removeAuflageButtonText: {
+      label: { en: "Remove Auflage Button Text" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Entfernen",
+      bindable: true,
+    },
+    auflagePlaceholder: {
+      label: { en: "Auflage Placeholder" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "z.B. 1000",
+      bindable: true,
+    },
+    minAuflagen: {
+      label: { en: "Minimum Auflagen" },
+      type: "Number",
+      section: "settings",
+      defaultValue: 1,
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "number",
+        tooltip: "Minimum number of Auflagen required",
+      },
+      /* wwEditor:end */
+    },
+    maxAuflagen: {
+      label: { en: "Maximum Auflagen" },
+      type: "Number",
+      section: "settings",
+      defaultValue: 10,
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "number",
+        tooltip: "Maximum number of Auflagen allowed",
+      },
+      /* wwEditor:end */
     },
 
     // Button Text
@@ -147,9 +272,9 @@ export default {
       name: "submit-success",
       label: { en: "On Submit Success" },
       event: {
-        titel: "",
-        beschreibung: "",
-        auflage: "",
+        produkt_titel: "",
+        produkt_beschreibung: "",
+        menge: [],
         response: {}
       },
     },
@@ -164,6 +289,23 @@ export default {
       name: "form-reset",
       label: { en: "On Form Reset" },
       event: {},
+    },
+    {
+      name: "template-loaded",
+      label: { en: "On Template Loaded" },
+      event: {
+        produkt_titel: "",
+        produkt_beschreibung: "",
+        menge: []
+      },
+    },
+    {
+      name: "historie-loaded",
+      label: { en: "On Historie Loaded" },
+      event: {
+        count: 0,
+        items: []
+      },
     },
   ],
 };
