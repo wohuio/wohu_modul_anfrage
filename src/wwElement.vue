@@ -109,67 +109,6 @@
       </form>
     </div>
 
-    <!-- Historie Section -->
-    <div v-if="content?.showHistorie" class="historie-section">
-      <h2 class="section-title">{{ content?.historieTitle || 'Vergangene Anfragen' }}</h2>
-
-      <div v-if="isLoadingHistorie" class="historie-loading">
-        Lade Historie...
-      </div>
-
-      <div v-else-if="historieError" class="historie-error">
-        {{ historieError }}
-      </div>
-
-      <div v-else-if="historieItems.length === 0" class="historie-empty">
-        Keine vergangenen Anfragen vorhanden
-      </div>
-
-      <div v-else class="historie-list">
-        <div
-          v-for="item in displayedHistorieItems"
-          :key="item.id"
-          class="historie-item"
-        >
-          <div class="historie-item-header">
-            <h3 class="historie-item-title">{{ item.produkt_titel }}</h3>
-            <span class="historie-item-date">{{ formatDate(item.created_at) }}</span>
-          </div>
-
-          <p class="historie-item-description">{{ item.produkt_beschreibung }}</p>
-
-          <div class="historie-item-menge">
-            <strong>Auflagen:</strong>
-            <span v-if="Array.isArray(item.menge) && item.menge.length > 0">
-              {{ item.menge.join(', ') }}
-            </span>
-            <span v-else class="text-muted">Keine Auflagen</span>
-          </div>
-
-          <div class="historie-item-actions">
-            <button
-              type="button"
-              class="btn btn-heart"
-              @click="toggleFavorite(item)"
-              :disabled="isTogglingFavorite"
-              :title="isFavorite(item.id) ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen'"
-            >
-              {{ isFavorite(item.id) ? '❤️' : '🤍' }}
-            </button>
-
-            <button
-              type="button"
-              class="btn btn-template"
-              :style="primaryButtonStyle"
-              @click="loadTemplate(item)"
-            >
-              {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Favoriten Section -->
     <div v-if="content?.showFavoriten" class="favoriten-section">
       <h2 class="section-title">{{ content?.favoritenTitle || 'Meine Favoriten' }}</h2>
@@ -224,6 +163,67 @@
             class="btn btn-template"
             :style="primaryButtonStyle"
             @click="loadTemplate(favorit.product_beschreibung_anfrage)"
+          >
+            {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historie Section -->
+    <div v-if="content?.showHistorie" class="historie-section">
+      <h2 class="section-title">{{ content?.historieTitle || 'Vergangene Anfragen' }}</h2>
+
+      <div v-if="isLoadingHistorie" class="historie-loading">
+        Lade Historie...
+      </div>
+
+      <div v-else-if="historieError" class="historie-error">
+        {{ historieError }}
+      </div>
+
+      <div v-else-if="historieItems.length === 0" class="historie-empty">
+        Keine vergangenen Anfragen vorhanden
+      </div>
+
+      <div v-else class="historie-list">
+        <div
+          v-for="item in displayedHistorieItems"
+          :key="item.id"
+          class="historie-item"
+        >
+          <div class="historie-item-header">
+            <h3 class="historie-item-title">{{ item.produkt_titel }}</h3>
+            <button
+              type="button"
+              class="btn btn-heart"
+              @click="toggleFavorite(item)"
+              :disabled="isTogglingFavorite"
+              :title="isFavorite(item.id) ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen'"
+            >
+              {{ isFavorite(item.id) ? '❤️' : '🤍' }}
+            </button>
+          </div>
+
+          <div class="historie-item-meta">
+            <span class="historie-item-date">{{ formatDate(item.created_at) }}</span>
+          </div>
+
+          <p class="historie-item-description">{{ item.produkt_beschreibung }}</p>
+
+          <div class="historie-item-menge">
+            <strong>Auflagen:</strong>
+            <span v-if="Array.isArray(item.menge) && item.menge.length > 0">
+              {{ item.menge.join(', ') }}
+            </span>
+            <span v-else class="text-muted">-</span>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-template"
+            :style="primaryButtonStyle"
+            @click="loadTemplate(item)"
           >
             {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
@@ -909,12 +909,14 @@ export default {
 }
 
 .section-title {
-  margin: 0 0 16px 0;
-  font-size: 20px;
-  font-weight: 600;
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-color);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 8px;
+  border-bottom: 3px solid var(--border-color);
+  padding-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .form-content {
@@ -1055,26 +1057,34 @@ export default {
 }
 
 .btn-template {
-  flex: 1;
+  width: 100%;
   font-size: 13px;
-  padding: 8px 12px;
+  padding: 10px 16px;
+  font-weight: 500;
 }
 
 .btn-heart,
 .btn-heart-filled {
-  width: 40px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: none;
   flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 0, 0, 0.1);
+    transform: scale(1.2);
+  }
+
+  &:active:not(:disabled) {
     transform: scale(1.1);
   }
 
@@ -1104,96 +1114,105 @@ export default {
 .historie-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 600px;
+  gap: 16px;
+  max-height: 700px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+    background: #f5f5f5;
+    border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
+    background: #bbb;
+    border-radius: 4px;
 
     &:hover {
-      background: #555;
+      background: #999;
     }
   }
 }
 
 .historie-item {
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 16px;
   transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
   &:hover {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #007bff;
+    transform: translateY(-2px);
   }
 }
 
 .historie-item-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
 .historie-item-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-color);
   flex: 1;
   word-break: break-word;
+  line-height: 1.3;
+}
+
+.historie-item-meta {
+  margin-bottom: 8px;
 }
 
 .historie-item-date {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  white-space: nowrap;
+  background-color: #f5f5f5;
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-block;
 }
 
 .historie-item-description {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 10px 0;
+  font-size: 13px;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .historie-item-menge {
-  font-size: 13px;
+  font-size: 12px;
   color: #555;
   margin-bottom: 12px;
+  background-color: #f9f9f9;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
 
   strong {
     font-weight: 600;
+    margin-right: 6px;
   }
 
   .text-muted {
     color: #999;
     font-style: italic;
   }
-}
-
-.historie-item-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 // Favoriten Section
@@ -1216,78 +1235,86 @@ export default {
 .favoriten-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 600px;
+  gap: 16px;
+  max-height: 700px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+    background: #f5f5f5;
+    border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
+    background: #ffd700;
+    border-radius: 4px;
 
     &:hover {
-      background: #555;
+      background: #ffb700;
     }
   }
 }
 
 .favoriten-item {
-  background-color: #fff9f0;
-  border: 1px solid #ffd700;
-  border-radius: 6px;
-  padding: 12px;
+  background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
+  border: 2px solid #ffd700;
+  border-radius: 8px;
+  padding: 16px;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.2);
 
   &:hover {
-    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
     border-color: #ffb700;
+    transform: translateY(-2px);
   }
 }
 
 .favoriten-item-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
 .favoriten-item-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-color);
   flex: 1;
   word-break: break-word;
+  line-height: 1.3;
 }
 
 .favoriten-item-description {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 10px 0;
+  font-size: 13px;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .favoriten-item-menge {
-  font-size: 13px;
+  font-size: 12px;
   color: #555;
   margin-bottom: 12px;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-left: 3px solid #ffd700;
 
   strong {
     font-weight: 600;
+    margin-right: 6px;
   }
 
   .text-muted {
