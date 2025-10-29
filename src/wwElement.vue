@@ -337,7 +337,7 @@ export default {
 
       try {
         const url = props.content.favoritenListEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list';
 
         const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}&page=1&per_page=100`;
         console.log('Loading favorites:', fullUrl);
@@ -386,7 +386,7 @@ export default {
     const addFavorite = async (anfrageId) => {
       try {
         const url = props.content.favoritenAddEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_add';
 
         const payload = {
           product_beschreibung_anfrage_id: anfrageId,
@@ -427,7 +427,7 @@ export default {
     const removeFavorite = async (favId) => {
       try {
         const url = props.content.favoritenDeleteEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_delete';
 
         const res = await fetch(`${url}?id=${favId}`, {
           method: 'DELETE',

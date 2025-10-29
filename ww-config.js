@@ -78,7 +78,7 @@ export default {
       label: { en: "Favoriten Add Endpoint (POST)" },
       type: "Text",
       section: "settings",
-      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_add",
       bindable: true,
       /* wwEditor:start */
       bindingValidation: {
@@ -91,7 +91,7 @@ export default {
       label: { en: "Favoriten Delete Endpoint (DELETE)" },
       type: "Text",
       section: "settings",
-      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_delete",
       bindable: true,
       /* wwEditor:start */
       bindingValidation: {
@@ -104,7 +104,7 @@ export default {
       label: { en: "Favoriten List Endpoint (GET)" },
       type: "Text",
       section: "settings",
-      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list",
       bindable: true,
       /* wwEditor:start */
       bindingValidation: {
