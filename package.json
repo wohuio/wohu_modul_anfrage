@@ -1,6 +1,6 @@
 {
   "name": "wohu-modul-anfrage",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "WeWeb element for creating product description requests with Xano API integration",
   "main": "src/wwElement.vue",
   "scripts": {
