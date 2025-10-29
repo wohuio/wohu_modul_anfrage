@@ -368,6 +368,7 @@ export default {
         const data = await res.json();
         console.log('Favorites data:', data);
         console.log('Favorites data type:', typeof data, Array.isArray(data));
+        console.log('Favorites data keys:', Object.keys(data));
 
         // Handle different response structures
         favorites.value = Array.isArray(data) ? data :
@@ -378,8 +379,10 @@ export default {
 
         // Log first item structure for debugging
         if (favorites.value.length > 0) {
-          console.log('First favorite item structure:', favorites.value[0]);
-          console.log('Keys in first item:', Object.keys(favorites.value[0]));
+          const firstItem = favorites.value[0];
+          console.log('First favorite item structure:', firstItem);
+          console.log('Keys in first item:', Object.keys(firstItem));
+          console.log('First item details:', JSON.stringify(firstItem, null, 2));
         }
 
         favPage.value = 1;
@@ -640,11 +643,11 @@ export default {
 
 .anfrage-module {
   background: #f8f9fa;
-  padding: 32px;
+  padding: 40px;
   color: var(--text);
   display: grid;
-  grid-template-columns: 1fr 400px 400px;
-  gap: 24px;
+  grid-template-columns: 1fr 420px 420px;
+  gap: 32px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
@@ -657,16 +660,16 @@ export default {
 .section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   background: white;
   border-radius: 12px;
-  padding: 28px;
+  padding: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   border: 1px solid #e9ecef;
 }
 
 .section-title {
-  margin: 0 0 20px;
+  margin: 0 0 24px;
   font-size: 20px;
   font-weight: 600;
   color: #1a1a1a;
@@ -676,7 +679,7 @@ export default {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .field label {
@@ -713,12 +716,12 @@ export default {
 .auflagen {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .auflage-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .auflage-row input {
@@ -784,7 +787,8 @@ export default {
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 14px;
+  margin-top: 4px;
 }
 
 .btn-primary,
@@ -873,7 +877,7 @@ export default {
 .items {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   max-height: 600px;
   overflow-y: auto;
   padding-right: 4px;
@@ -900,8 +904,8 @@ export default {
 .item {
   background: #fff;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 18px;
+  border-radius: 10px;
+  padding: 20px;
   transition: all 0.2s ease;
 }
 
@@ -919,8 +923,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .item-header h3 {
@@ -964,20 +968,20 @@ export default {
 }
 
 .item p {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   font-size: 13px;
   color: #666;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .meta {
   font-size: 12px;
   color: #495057;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: #f8f9fa;
   border-radius: 6px;
   border-left: 3px solid #4c6ef5;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .btn-template {
