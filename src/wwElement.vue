@@ -85,15 +85,15 @@
       <div v-else class="items">
         <div v-for="fav in paginatedFavorites" :key="fav.id" class="item favorite-item">
           <div class="item-header">
-            <h3>{{ fav.product_beschreibung_anfrage?.produkt_titel || 'Unbekannt' }}</h3>
+            <h3>{{ getFavTitel(fav) }}</h3>
             <button class="btn-heart" @click="removeFavorite(fav.id)">❤️</button>
           </div>
-          <p>{{ fav.product_beschreibung_anfrage?.produkt_beschreibung }}</p>
+          <p>{{ getFavBeschreibung(fav) }}</p>
           <div class="meta">
             <strong>Auflagen:</strong>
-            {{ formatMenge(fav.product_beschreibung_anfrage?.menge) }}
+            {{ getFavMenge(fav) }}
           </div>
-          <button class="btn-template" @click="loadTemplate(fav.product_beschreibung_anfrage)">
+          <button class="btn-template" @click="loadTemplate(getFavData(fav))">
             {{ content.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
@@ -375,6 +375,13 @@ export default {
                          Array.isArray(data.items) ? data.items : [];
 
         console.log('Favorites loaded:', favorites.value.length, 'items');
+
+        // Log first item structure for debugging
+        if (favorites.value.length > 0) {
+          console.log('First favorite item structure:', favorites.value[0]);
+          console.log('Keys in first item:', Object.keys(favorites.value[0]));
+        }
+
         favPage.value = 1;
 
         emit('trigger-event', {
@@ -539,6 +546,33 @@ export default {
       return '-';
     };
 
+    // Helper functions for favorites - supports different data structures
+    const getFavTitel = (fav) => {
+      return fav.product_beschreibung_anfrage?.produkt_titel ||
+             fav.produkt_titel ||
+             fav.titel ||
+             'Unbekannt';
+    };
+
+    const getFavBeschreibung = (fav) => {
+      return fav.product_beschreibung_anfrage?.produkt_beschreibung ||
+             fav.produkt_beschreibung ||
+             fav.beschreibung ||
+             '';
+    };
+
+    const getFavMenge = (fav) => {
+      const menge = fav.product_beschreibung_anfrage?.menge ||
+                    fav.menge ||
+                    [];
+      return formatMenge(menge);
+    };
+
+    const getFavData = (fav) => {
+      // Return the full anfrage object for loading as template
+      return fav.product_beschreibung_anfrage || fav || {};
+    };
+
     // Watchers
     watch(() => props.content.userId, () => {
       if (props.content.showFavoriten) loadFavorites();
@@ -590,6 +624,10 @@ export default {
       clearSearch,
       formatDate,
       formatMenge,
+      getFavTitel,
+      getFavBeschreibung,
+      getFavMenge,
+      getFavData,
     };
   },
 };
