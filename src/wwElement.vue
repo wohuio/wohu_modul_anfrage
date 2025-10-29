@@ -520,6 +520,19 @@ export default {
 
     // Lifecycle
     onMounted(() => {
+      console.log('=== Component Mounted ===');
+      console.log('Config:', {
+        userId: props.content.userId,
+        showHistorie: props.content.showHistorie,
+        showFavoriten: props.content.showFavoriten,
+        historieEndpoint: props.content.historieEndpoint,
+        historieSearchEndpoint: props.content.historieSearchEndpoint,
+        favoritenAddEndpoint: props.content.favoritenAddEndpoint,
+        favoritenDeleteEndpoint: props.content.favoritenDeleteEndpoint,
+        favoritenListEndpoint: props.content.favoritenListEndpoint,
+      });
+      console.log('=========================');
+
       if (props.content.showHistorie) loadHistorie();
       if (props.content.showFavoriten) loadFavorites();
     });

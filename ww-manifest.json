@@ -1,7 +1,7 @@
 {
   "name": "Produkt Anfrage",
   "id": "wohu-modul-anfrage",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": "wohu.io",
   "description": "Form element for creating product description requests with Xano API integration",
   "license": "MIT",
