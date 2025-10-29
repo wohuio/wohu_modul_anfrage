@@ -297,7 +297,7 @@ export default {
     };
 
     const searchHistorie = async (query) => {
-      if (!query) {
+      if (!query || !props.content.userId) {
         loadHistorie();
         return;
       }
@@ -306,14 +306,41 @@ export default {
 
       try {
         const url = props.content.historieSearchEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/text_search';
 
-        const res = await fetch(`${url}?q=${encodeURIComponent(query)}`);
-        if (!res.ok) throw new Error('Search failed');
+        const params = new URLSearchParams({
+          user_id: parseInt(props.content.userId),
+          search_term: query,
+          page: 1,
+          per_page: 100
+        });
+
+        console.log('Searching history:', `${url}?${params.toString()}`);
+
+        const res = await fetch(`${url}?${params.toString()}`);
+        console.log('Search response:', res.status, res.statusText);
+
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error('Search error:', {
+            status: res.status,
+            body: errorText,
+            url: `${url}?${params.toString()}`
+          });
+          throw new Error('Search failed');
+        }
 
         const data = await res.json();
-        historie.value = Array.isArray(data) ? data : [];
+        console.log('Search results:', data);
+
+        // Handle response structure
+        historie.value = Array.isArray(data) ? data :
+                        Array.isArray(data.items) ? data.items :
+                        Array.isArray(data.search_results) ? data.search_results : [];
+
         histPage.value = 1;
+
+        console.log('Historie search completed:', historie.value.length, 'results');
 
         emit('trigger-event', {
           name: 'historie-searched',
@@ -321,6 +348,7 @@ export default {
         });
 
       } catch (err) {
+        console.error('searchHistorie error:', err);
         historie.value = [];
       } finally {
         loadingHist.value = false;
@@ -1084,5 +1112,38 @@ export default {
   color: var(--gray-600);
   font-weight: 500;
   padding: 0 var(--space-sm);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.item {
+  animation: fadeIn var(--transition-base);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .anfrage-module {
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+
+  .section {
+    padding: var(--space-lg);
+  }
 }
 </style>

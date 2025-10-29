@@ -65,7 +65,7 @@ export default {
       label: { en: "Historie Search Endpoint (GET)" },
       type: "Text",
       section: "settings",
-      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/text_search",
       bindable: true,
       /* wwEditor:start */
       bindingValidation: {
