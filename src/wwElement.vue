@@ -206,6 +206,27 @@
     <div v-if="content?.showHistorie" class="historie-section">
       <h2 class="section-title">{{ content?.historieTitle || 'Vergangene Anfragen' }}</h2>
 
+      <!-- Search Input -->
+      <div class="search-container">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="search-input"
+          :style="inputStyle"
+          :placeholder="content?.historieSearchPlaceholder || 'Suchen...'"
+          @input="handleSearchInput"
+        />
+        <button
+          v-if="searchQuery"
+          type="button"
+          class="search-clear-btn"
+          @click="clearSearch"
+          title="Suche löschen"
+        >
+          ✕
+        </button>
+      </div>
+
       <div v-if="isLoadingHistorie" class="historie-loading">
         Lade Historie...
       </div>
@@ -326,6 +347,8 @@ export default {
     const isLoadingHistorie = ref(false);
     const historieError = ref('');
     const historieItems = ref([]);
+    const searchQuery = ref('');
+    const searchDebounceTimer = ref(null);
 
     // Favoriten tracking
     const isLoadingFavoriten = ref(false);
@@ -481,6 +504,79 @@ export default {
       } finally {
         isLoadingHistorie.value = false;
       }
+    };
+
+    // Search Historie
+    const performSearch = async (query) => {
+      if (!props.content?.showHistorie) return;
+
+      if (!query || query.trim() === '') {
+        // If search is empty, reload all historie
+        await loadHistorie();
+        return;
+      }
+
+      isLoadingHistorie.value = true;
+      historieError.value = '';
+
+      try {
+        const endpoint = props.content?.historieSearchEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search';
+
+        const url = `${endpoint}?q=${encodeURIComponent(query.trim())}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        historieItems.value = Array.isArray(data) ? data : [];
+
+        // Reset to first page when search results change
+        currentHistoriePage.value = 1;
+
+        // Emit historie-searched event with search results
+        emit('trigger-event', {
+          name: 'historie-searched',
+          event: {
+            query: query.trim(),
+            count: historieItems.value.length,
+            items: historieItems.value,
+          },
+        });
+
+      } catch (error) {
+        historieError.value = 'Fehler beim Durchsuchen der Historie';
+        console.error('Historie search error:', error);
+      } finally {
+        isLoadingHistorie.value = false;
+      }
+    };
+
+    // Handle search input with debounce
+    const handleSearchInput = () => {
+      // Clear existing timer
+      if (searchDebounceTimer.value) {
+        clearTimeout(searchDebounceTimer.value);
+      }
+
+      // Set new timer for 500ms debounce
+      searchDebounceTimer.value = setTimeout(() => {
+        performSearch(searchQuery.value);
+      }, 500);
+    };
+
+    // Clear search
+    const clearSearch = () => {
+      searchQuery.value = '';
+      loadHistorie();
     };
 
     // Load Favoriten from API
@@ -947,6 +1043,7 @@ export default {
       historieError,
       historieItems,
       displayedHistorieItems,
+      searchQuery,
       isLoadingFavoriten,
       favoritenError,
       favoritenItems,
@@ -977,6 +1074,8 @@ export default {
       goToHistoriePage,
       goToFavoritenPage,
       getPageNumbers,
+      handleSearchInput,
+      clearSearch,
     };
   },
 };
@@ -1234,6 +1333,62 @@ export default {
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+// Search Container
+.search-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  font-size: 14px;
+  border: 1px solid;
+  border-radius: 4px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #ffffff;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  }
+
+  &::placeholder {
+    color: #999999;
+  }
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #333;
+  }
+
+  &:active {
+    transform: translateY(-50%) scale(0.95);
   }
 }
 

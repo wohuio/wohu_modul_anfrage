@@ -61,6 +61,19 @@ export default {
       },
       /* wwEditor:end */
     },
+    historieSearchEndpoint: {
+      label: { en: "Historie Search Endpoint (GET)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/search",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for searching history",
+      },
+      /* wwEditor:end */
+    },
     favoritenAddEndpoint: {
       label: { en: "Favoriten Add Endpoint (POST)" },
       type: "Text",
@@ -162,6 +175,14 @@ export default {
       type: "Text",
       section: "settings",
       defaultValue: "Als Vorlage laden",
+      bindable: true,
+      hidden: (content) => !content?.showHistorie,
+    },
+    historieSearchPlaceholder: {
+      label: { en: "Historie Search Placeholder" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Suchen...",
       bindable: true,
       hidden: (content) => !content?.showHistorie,
     },
@@ -424,6 +445,15 @@ export default {
       name: "favoriten-loaded",
       label: { en: "On Favoriten Loaded" },
       event: {
+        count: 0,
+        items: []
+      },
+    },
+    {
+      name: "historie-searched",
+      label: { en: "On Historie Searched" },
+      event: {
+        query: "",
         count: 0,
         items: []
       },
