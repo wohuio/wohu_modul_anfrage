@@ -670,9 +670,9 @@ export default {
 }
 
 .anfrage-module {
-  background: #f5f7fa;
+  background: #ffffff;
   padding: 32px;
-  color: #2d3748;
+  color: #3b3d45;
   display: grid;
   grid-template-columns: 1fr 420px 420px;
   gap: 32px;
@@ -700,7 +700,7 @@ export default {
   margin: 0 0 24px;
   font-size: 20px;
   font-weight: 600;
-  color: #1a202c;
+  color: #0c0c0e;
   letter-spacing: -0.01em;
 }
 
@@ -713,7 +713,7 @@ export default {
 .field label {
   font-size: 13px;
   font-weight: 500;
-  color: #2d3748;
+  color: #3b3d45;
   margin-bottom: 4px;
 }
 
@@ -721,24 +721,24 @@ export default {
 .field textarea {
   padding: 8px 16px;
   font-size: 14px;
-  border: 1px solid #cbd5e0;
+  border: 1px solid #dedfe3;
   border-radius: 8px;
   font-family: inherit;
   transition: all 150ms ease;
   background: #ffffff;
-  color: #1a202c;
+  color: #0c0c0e;
 }
 
 .field input:hover,
 .field textarea:hover {
-  border-color: #a0aec0;
+  border-color: #c2c5cb;
 }
 
 .field input:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+  border-color: #0c56e9;
+  box-shadow: inset 0 0 0 1px #0c56e9, 0 0 0 3px #5990ff;
 }
 
 .auflagen {
@@ -762,7 +762,7 @@ export default {
   padding: 0;
   background: #ffffff;
   color: #ef5350;
-  border: 1px solid #cbd5e0;
+  border: 1px solid #dedfe3;
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
@@ -781,8 +781,8 @@ export default {
 .btn-add {
   padding: 8px 16px;
   background: white;
-  color: #00bcd4;
-  border: 1px dashed #cbd5e0;
+  color: #1060ff;
+  border: 1px dashed #dedfe3;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
@@ -791,8 +791,8 @@ export default {
 }
 
 .btn-add:hover {
-  background: rgba(0, 188, 212, 0.05);
-  border-color: #00bcd4;
+  background: #f2f8ff;
+  border-color: #1060ff;
   border-style: solid;
 }
 
@@ -834,26 +834,26 @@ export default {
 }
 
 .btn-primary {
-  background: #00bcd4;
+  background: #1060ff;
   color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #00acc1;
+  background: #0c56e9;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
   background: #ffffff;
-  color: #2d3748;
-  border: 1px solid #cbd5e0;
+  color: #3b3d45;
+  border: 1px solid #dedfe3;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #f0f2f5;
-  border-color: #a0aec0;
+  background: #fafafa;
+  border-color: #c2c5cb;
 }
 
 .btn-primary:disabled,
@@ -870,15 +870,15 @@ export default {
 .search input {
   width: 100%;
   padding: 8px 40px 8px 16px;
-  border: 1px solid #cbd5e0;
+  border: 1px solid #dedfe3;
   border-radius: 8px;
   font-size: 14px;
   transition: all 150ms ease;
 }
 
 .search input:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+  border-color: #0c56e9;
+  box-shadow: inset 0 0 0 1px #0c56e9, 0 0 0 3px #5990ff;
 }
 
 .btn-clear {
@@ -892,24 +892,24 @@ export default {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #a0aec0;
+  color: #c2c5cb;
   border-radius: 50%;
   transition: all 150ms ease;
 }
 
 .btn-clear:hover {
-  background: #e4e7eb;
-  color: #4a5568;
+  background: #f1f2f3;
+  color: #656a76;
 }
 
 .empty {
   padding: 32px 24px;
   text-align: center;
-  color: #718096;
+  color: #8c909c;
   font-size: 14px;
-  border: 2px dashed #cbd5e0;
+  border: 2px dashed #dedfe3;
   border-radius: 8px;
-  background: #f0f2f5;
+  background: #fafafa;
 }
 
 .items {
@@ -926,22 +926,22 @@ export default {
 }
 
 .items::-webkit-scrollbar-track {
-  background: #e4e7eb;
+  background: #f1f2f3;
   border-radius: 8px;
 }
 
 .items::-webkit-scrollbar-thumb {
-  background: #a0aec0;
+  background: #c2c5cb;
   border-radius: 8px;
 }
 
 .items::-webkit-scrollbar-thumb:hover {
-  background: #718096;
+  background: #8c909c;
 }
 
 .item {
   background: #ffffff;
-  border: 1px solid #e4e7eb;
+  border: 1px solid #f1f2f3;
   border-radius: 12px;
   padding: 24px;
   transition: all 250ms ease;
@@ -950,13 +950,13 @@ export default {
 
 .item:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  border-color: #cbd5e0;
+  border-color: #dedfe3;
 }
 
 .favorite-item {
-  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-  border: 2px solid #00bcd4;
-  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.15);
+  background: #f2f8ff;
+  border: 2px solid #cce3fe;
+  box-shadow: 0px 2px 3px 0px rgba(101, 106, 118, 0.1), 0px 8px 16px -10px rgba(101, 106, 118, 0.2);
 }
 
 .item-header {
@@ -972,7 +972,7 @@ export default {
   font-size: 15px;
   font-weight: 600;
   flex: 1;
-  color: #1a202c;
+  color: #0c0c0e;
 }
 
 .btn-heart {
@@ -980,7 +980,7 @@ export default {
   height: 36px;
   padding: 0;
   background: #ffffff;
-  border: 1px solid #cbd5e0;
+  border: 1px solid #dedfe3;
   cursor: pointer;
   font-size: 18px;
   border-radius: 8px;
@@ -998,8 +998,8 @@ export default {
 
 .date {
   font-size: 11px;
-  color: #4a5568;
-  background: #e4e7eb;
+  color: #656a76;
+  background: #f1f2f3;
   padding: 4px 10px;
   border-radius: 8px;
   display: inline-block;
@@ -1010,24 +1010,24 @@ export default {
 .item p {
   margin: 0 0 16px;
   font-size: 13px;
-  color: #4a5568;
+  color: #656a76;
   line-height: 1.6;
 }
 
 .meta {
   font-size: 12px;
-  color: #2d3748;
+  color: #3b3d45;
   padding: 8px 16px;
-  background: #f0f2f5;
+  background: #fafafa;
   border-radius: 8px;
-  border-left: 3px solid #00bcd4;
+  border-left: 3px solid #1060ff;
   margin-bottom: 16px;
 }
 
 .btn-template {
   width: 100%;
   padding: 8px 16px;
-  background: #00bcd4;
+  background: #1060ff;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -1038,7 +1038,7 @@ export default {
 }
 
 .btn-template:hover {
-  background: #00acc1;
+  background: #0c56e9;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
@@ -1050,7 +1050,7 @@ export default {
   gap: 8px;
   padding-top: 16px;
   margin-top: 16px;
-  border-top: 1px solid #e4e7eb;
+  border-top: 1px solid #f1f2f3;
 }
 
 .pagination button {
@@ -1058,12 +1058,12 @@ export default {
   height: 32px;
   padding: 0;
   background: #ffffff;
-  border: 1px solid #cbd5e0;
+  border: 1px solid #dedfe3;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #2d3748;
+  color: #3b3d45;
   transition: all 150ms ease;
   display: flex;
   align-items: center;
@@ -1071,8 +1071,8 @@ export default {
 }
 
 .pagination button:hover:not(:disabled) {
-  background: #f0f2f5;
-  border-color: #a0aec0;
+  background: #fafafa;
+  border-color: #c2c5cb;
 }
 
 .pagination button:disabled {
@@ -1082,7 +1082,7 @@ export default {
 
 .pagination span {
   font-size: 13px;
-  color: #4a5568;
+  color: #656a76;
   font-weight: 500;
   padding: 0 8px;
 }
