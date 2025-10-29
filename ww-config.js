@@ -22,6 +22,19 @@ export default {
     },
 
     // API Configuration
+    userId: {
+      label: { en: "User ID" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "number",
+        tooltip: "Current user ID for API calls (bind to user.id)",
+      },
+      /* wwEditor:end */
+    },
     apiEndpoint: {
       label: { en: "API Endpoint (POST)" },
       type: "Text",
@@ -45,6 +58,45 @@ export default {
       bindingValidation: {
         type: "string",
         tooltip: "Xano API endpoint URL for fetching history",
+      },
+      /* wwEditor:end */
+    },
+    favoritenAddEndpoint: {
+      label: { en: "Favoriten Add Endpoint (POST)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for adding favorites",
+      },
+      /* wwEditor:end */
+    },
+    favoritenDeleteEndpoint: {
+      label: { en: "Favoriten Delete Endpoint (DELETE)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for deleting favorites",
+      },
+      /* wwEditor:end */
+    },
+    favoritenListEndpoint: {
+      label: { en: "Favoriten List Endpoint (GET)" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list",
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "string",
+        tooltip: "Xano API endpoint URL for fetching favorites",
       },
       /* wwEditor:end */
     },
@@ -112,6 +164,37 @@ export default {
       defaultValue: "Als Vorlage laden",
       bindable: true,
       hidden: (content) => !content?.showHistorie,
+    },
+
+    // Favoriten Configuration
+    showFavoriten: {
+      label: { en: "Show Favoriten" },
+      type: "OnOff",
+      section: "settings",
+      defaultValue: true,
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "boolean",
+        tooltip: "Show or hide the favorites section",
+      },
+      /* wwEditor:end */
+    },
+    favoritenTitle: {
+      label: { en: "Favoriten Title" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Meine Favoriten",
+      bindable: true,
+      hidden: (content) => !content?.showFavoriten,
+    },
+    removeFromFavoritesButtonText: {
+      label: { en: "Remove from Favorites Text" },
+      type: "Text",
+      section: "settings",
+      defaultValue: "Entfernen",
+      bindable: true,
+      hidden: (content) => !content?.showFavoriten,
     },
 
     // Form Field Labels
@@ -302,6 +385,30 @@ export default {
     {
       name: "historie-loaded",
       label: { en: "On Historie Loaded" },
+      event: {
+        count: 0,
+        items: []
+      },
+    },
+    {
+      name: "favorite-added",
+      label: { en: "On Favorite Added" },
+      event: {
+        favorit_id: 0,
+        anfrage_id: 0
+      },
+    },
+    {
+      name: "favorite-removed",
+      label: { en: "On Favorite Removed" },
+      event: {
+        favorit_id: 0,
+        anfrage_id: 0
+      },
+    },
+    {
+      name: "favoriten-loaded",
+      label: { en: "On Favoriten Loaded" },
       event: {
         count: 0,
         items: []

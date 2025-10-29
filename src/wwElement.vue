@@ -146,11 +146,84 @@
             <span v-else class="text-muted">Keine Auflagen</span>
           </div>
 
+          <div class="historie-item-actions">
+            <button
+              type="button"
+              class="btn btn-heart"
+              @click="toggleFavorite(item)"
+              :disabled="isTogglingFavorite"
+              :title="isFavorite(item.id) ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen'"
+            >
+              {{ isFavorite(item.id) ? '❤️' : '🤍' }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-template"
+              :style="primaryButtonStyle"
+              @click="loadTemplate(item)"
+            >
+              {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favoriten Section -->
+    <div v-if="content?.showFavoriten" class="favoriten-section">
+      <h2 class="section-title">{{ content?.favoritenTitle || 'Meine Favoriten' }}</h2>
+
+      <div v-if="isLoadingFavoriten" class="favoriten-loading">
+        Lade Favoriten...
+      </div>
+
+      <div v-else-if="favoritenError" class="favoriten-error">
+        {{ favoritenError }}
+      </div>
+
+      <div v-else-if="favoritenItems.length === 0" class="favoriten-empty">
+        Noch keine Favoriten vorhanden
+      </div>
+
+      <div v-else class="favoriten-list">
+        <div
+          v-for="favorit in favoritenItems"
+          :key="favorit.id"
+          class="favoriten-item"
+        >
+          <div class="favoriten-item-header">
+            <h3 class="favoriten-item-title">
+              {{ favorit.product_beschreibung_anfrage?.produkt_titel || 'Unbekannt' }}
+            </h3>
+            <button
+              type="button"
+              class="btn btn-heart-filled"
+              @click="removeFavorite(favorit)"
+              :disabled="isTogglingFavorite"
+              title="Von Favoriten entfernen"
+            >
+              ❤️
+            </button>
+          </div>
+
+          <p class="favoriten-item-description">
+            {{ favorit.product_beschreibung_anfrage?.produkt_beschreibung || '' }}
+          </p>
+
+          <div class="favoriten-item-menge">
+            <strong>Auflagen:</strong>
+            <span v-if="Array.isArray(favorit.product_beschreibung_anfrage?.menge) && favorit.product_beschreibung_anfrage.menge.length > 0">
+              {{ favorit.product_beschreibung_anfrage.menge.join(', ') }}
+            </span>
+            <span v-else class="text-muted">Keine Auflagen</span>
+          </div>
+
           <button
             type="button"
             class="btn btn-template"
             :style="primaryButtonStyle"
-            @click="loadTemplate(item)"
+            @click="loadTemplate(favorit.product_beschreibung_anfrage)"
           >
             {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
@@ -190,6 +263,12 @@ export default {
     const historieError = ref('');
     const historieItems = ref([]);
 
+    // Favoriten tracking
+    const isLoadingFavoriten = ref(false);
+    const favoritenError = ref('');
+    const favoritenItems = ref([]);
+    const isTogglingFavorite = ref(false);
+
     // Internal variables for NoCode users
     const { value: lastRequestData, setValue: setLastRequestData } =
       wwLib.wwVariable.useComponentVariable({
@@ -209,9 +288,16 @@ export default {
 
     // Computed properties
     const layoutClass = computed(() => {
-      const position = props.content?.historiePosition || 'right';
       const showHistorie = props.content?.showHistorie;
-      return showHistorie ? `layout-${position}` : 'layout-single';
+      const showFavoriten = props.content?.showFavoriten;
+      const position = props.content?.historiePosition || 'right';
+
+      if (showHistorie && showFavoriten) {
+        return 'layout-three';
+      } else if (showHistorie || showFavoriten) {
+        return `layout-${position}`;
+      }
+      return 'layout-single';
     });
 
     const displayedHistorieItems = computed(() => {
@@ -309,6 +395,219 @@ export default {
       }
     };
 
+    // Load Favoriten from API
+    const loadFavoriten = async () => {
+      if (!props.content?.showFavoriten) return;
+
+      const userId = props.content?.userId;
+      if (!userId) {
+        favoritenError.value = 'User ID fehlt';
+        return;
+      }
+
+      isLoadingFavoriten.value = true;
+      favoritenError.value = '';
+
+      try {
+        const endpoint = props.content?.favoritenListEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list';
+
+        const url = `${endpoint}?user_id=${userId}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        favoritenItems.value = Array.isArray(data) ? data : [];
+
+        // Emit favoriten-loaded event
+        emit('trigger-event', {
+          name: 'favoriten-loaded',
+          event: {
+            count: favoritenItems.value.length,
+            items: favoritenItems.value,
+          },
+        });
+
+      } catch (error) {
+        favoritenError.value = 'Fehler beim Laden der Favoriten';
+        console.error('Favoriten loading error:', error);
+      } finally {
+        isLoadingFavoriten.value = false;
+      }
+    };
+
+    // Check if item is favorite
+    const isFavorite = (anfrageId) => {
+      return favoritenItems.value.some(
+        fav => fav.product_beschreibung_anfrage_id === anfrageId
+      );
+    };
+
+    // Get favorit ID by anfrage ID
+    const getFavoritId = (anfrageId) => {
+      const favorit = favoritenItems.value.find(
+        fav => fav.product_beschreibung_anfrage_id === anfrageId
+      );
+      return favorit?.id || null;
+    };
+
+    // Toggle favorite (add or remove)
+    const toggleFavorite = async (item) => {
+      const userId = props.content?.userId;
+      if (!userId) {
+        statusMessage.value = 'User ID fehlt';
+        statusType.value = 'error';
+        return;
+      }
+
+      isTogglingFavorite.value = true;
+
+      try {
+        if (isFavorite(item.id)) {
+          // Remove from favorites
+          const favoritId = getFavoritId(item.id);
+          if (!favoritId) throw new Error('Favorit ID nicht gefunden');
+
+          const endpoint = props.content?.favoritenDeleteEndpoint ||
+            'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
+
+          const response = await fetch(`${endpoint}?id=${favoritId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // Remove from local state
+          favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favoritId);
+
+          // Emit event
+          emit('trigger-event', {
+            name: 'favorite-removed',
+            event: {
+              favorit_id: favoritId,
+              anfrage_id: item.id,
+            },
+          });
+
+        } else {
+          // Add to favorites
+          const endpoint = props.content?.favoritenAddEndpoint ||
+            'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
+
+          const payload = {
+            user_id: parseInt(userId),
+            product_beschreibung_anfrage_id: item.id,
+          };
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // Reload favorites to get the full object with joined data
+          await loadFavoriten();
+
+          // Emit event
+          emit('trigger-event', {
+            name: 'favorite-added',
+            event: {
+              favorit_id: 0, // Will be set after reload
+              anfrage_id: item.id,
+            },
+          });
+        }
+
+      } catch (error) {
+        statusMessage.value = 'Fehler beim Aktualisieren der Favoriten';
+        statusType.value = 'error';
+        console.error('Toggle favorite error:', error);
+
+        setTimeout(() => {
+          if (statusMessage.value === 'Fehler beim Aktualisieren der Favoriten') {
+            statusMessage.value = '';
+            statusType.value = '';
+          }
+        }, 3000);
+      } finally {
+        isTogglingFavorite.value = false;
+      }
+    };
+
+    // Remove favorite
+    const removeFavorite = async (favorit) => {
+      const userId = props.content?.userId;
+      if (!userId) {
+        statusMessage.value = 'User ID fehlt';
+        statusType.value = 'error';
+        return;
+      }
+
+      isTogglingFavorite.value = true;
+
+      try {
+        const endpoint = props.content?.favoritenDeleteEndpoint ||
+          'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
+
+        const response = await fetch(`${endpoint}?id=${favorit.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Remove from local state
+        favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favorit.id);
+
+        // Emit event
+        emit('trigger-event', {
+          name: 'favorite-removed',
+          event: {
+            favorit_id: favorit.id,
+            anfrage_id: favorit.product_beschreibung_anfrage_id,
+          },
+        });
+
+      } catch (error) {
+        statusMessage.value = 'Fehler beim Entfernen des Favoriten';
+        statusType.value = 'error';
+        console.error('Remove favorite error:', error);
+
+        setTimeout(() => {
+          if (statusMessage.value === 'Fehler beim Entfernen des Favoriten') {
+            statusMessage.value = '';
+            statusType.value = '';
+          }
+        }, 3000);
+      } finally {
+        isTogglingFavorite.value = false;
+      }
+    };
+
     // Load template from historie item
     const loadTemplate = (item) => {
       formData.value = {
@@ -346,11 +645,17 @@ export default {
       statusType.value = '';
 
       try {
+        const userId = props.content?.userId;
+        if (!userId) {
+          throw new Error('User ID fehlt');
+        }
+
         const endpoint = props.content?.apiEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
 
         // Create JSON payload
         const payload = {
+          user_id: parseInt(userId),
           produkt_titel: formData.value.produkt_titel,
           produkt_beschreibung: formData.value.produkt_beschreibung,
           menge: formData.value.menge.filter(m => m > 0), // Remove zeros
@@ -480,10 +785,23 @@ export default {
       { deep: true }
     );
 
-    // Load historie on mount
+    // Watch for userId changes to reload favoriten
+    watch(
+      () => props.content?.userId,
+      (newValue) => {
+        if (newValue && props.content?.showFavoriten) {
+          loadFavoriten();
+        }
+      }
+    );
+
+    // Load historie and favoriten on mount
     onMounted(() => {
       if (props.content?.showHistorie) {
         loadHistorie();
+      }
+      if (props.content?.showFavoriten) {
+        loadFavoriten();
       }
     });
 
@@ -496,6 +814,10 @@ export default {
       historieError,
       historieItems,
       displayedHistorieItems,
+      isLoadingFavoriten,
+      favoritenError,
+      favoritenItems,
+      isTogglingFavorite,
       layoutClass,
       containerStyle,
       inputStyle,
@@ -509,6 +831,9 @@ export default {
       handleSubmit,
       handleReset,
       formatDate,
+      isFavorite,
+      toggleFavorite,
+      removeFavorite,
     };
   },
 };
@@ -557,10 +882,27 @@ export default {
       width: 100%;
     }
   }
+
+  &.layout-three {
+    flex-direction: row;
+    align-items: flex-start;
+
+    .form-section {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .historie-section,
+    .favoriten-section {
+      flex: 0 0 350px;
+      max-width: 350px;
+    }
+  }
 }
 
 .form-section,
-.historie-section {
+.historie-section,
+.favoriten-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -713,9 +1055,33 @@ export default {
 }
 
 .btn-template {
-  width: 100%;
+  flex: 1;
   font-size: 13px;
   padding: 8px 12px;
+}
+
+.btn-heart,
+.btn-heart-filled {
+  width: 40px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 // Historie Section
@@ -824,12 +1190,120 @@ export default {
   }
 }
 
+.historie-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+// Favoriten Section
+.favoriten-loading,
+.favoriten-error,
+.favoriten-empty {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+}
+
+.favoriten-error {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.favoriten-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+
+    &:hover {
+      background: #555;
+    }
+  }
+}
+
+.favoriten-item {
+  background-color: #fff9f0;
+  border: 1px solid #ffd700;
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+    border-color: #ffb700;
+  }
+}
+
+.favoriten-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.favoriten-item-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  flex: 1;
+  word-break: break-word;
+}
+
+.favoriten-item-description {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.favoriten-item-menge {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 12px;
+
+  strong {
+    font-weight: 600;
+  }
+
+  .text-muted {
+    color: #999;
+    font-style: italic;
+  }
+}
+
 // Responsive design
 @media (max-width: 1024px) {
-  .anfrage-module.layout-right {
+  .anfrage-module.layout-right,
+  .anfrage-module.layout-three {
     flex-direction: column;
 
-    .historie-section {
+    .historie-section,
+    .favoriten-section {
       flex: 1;
       max-width: 100%;
     }
