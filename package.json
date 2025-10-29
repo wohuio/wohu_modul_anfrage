@@ -1,0 +1,23 @@
+{
+  "name": "wohu-modul-anfrage",
+  "version": "1.0.0",
+  "description": "WeWeb element for creating product description requests with Xano API integration",
+  "main": "src/wwElement.vue",
+  "scripts": {
+    "build": "weweb build",
+    "serve": "weweb serve"
+  },
+  "keywords": [
+    "weweb",
+    "element",
+    "form",
+    "anfrage",
+    "request",
+    "xano"
+  ],
+  "author": "wohu.io",
+  "license": "MIT",
+  "devDependencies": {
+    "@weweb/cli": "latest"
+  }
+}
