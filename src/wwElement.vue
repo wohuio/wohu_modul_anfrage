@@ -585,7 +585,9 @@ export default {
 
       const userId = props.content?.userId;
       if (!userId) {
-        favoritenError.value = 'User ID fehlt';
+        console.warn('loadFavoriten: User ID is not set');
+        favoritenError.value = '';
+        favoritenItems.value = [];
         return;
       }
 
@@ -596,7 +598,16 @@ export default {
         const endpoint = props.content?.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_list';
 
-        const url = `${endpoint}?user_id=${userId}`;
+        // Ensure userId is a number
+        const numericUserId = parseInt(userId);
+        if (isNaN(numericUserId)) {
+          console.error('Invalid user ID:', userId);
+          favoritenError.value = 'Ungültige User ID';
+          return;
+        }
+
+        const url = `${endpoint}?user_id=${numericUserId}`;
+        console.log('Loading Favoriten from:', url);
 
         const response = await fetch(url, {
           method: 'GET',
@@ -606,11 +617,19 @@ export default {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text().catch(() => '');
+          console.error('Favoriten API error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            url: url
+          });
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
         favoritenItems.value = Array.isArray(data) ? data : [];
+        console.log('Favoriten loaded:', favoritenItems.value.length, 'items');
 
         // Reset to first page when data changes
         currentFavoritenPage.value = 1;
@@ -625,8 +644,9 @@ export default {
         });
 
       } catch (error) {
-        favoritenError.value = 'Fehler beim Laden der Favoriten';
+        favoritenError.value = `Fehler beim Laden der Favoriten: ${error.message}`;
         console.error('Favoriten loading error:', error);
+        favoritenItems.value = [];
       } finally {
         isLoadingFavoriten.value = false;
       }
@@ -651,8 +671,26 @@ export default {
     const toggleFavorite = async (item) => {
       const userId = props.content?.userId;
       if (!userId) {
+        console.warn('toggleFavorite: User ID is not set');
         statusMessage.value = 'User ID fehlt';
         statusType.value = 'error';
+        setTimeout(() => {
+          statusMessage.value = '';
+          statusType.value = '';
+        }, 3000);
+        return;
+      }
+
+      // Ensure userId is a number
+      const numericUserId = parseInt(userId);
+      if (isNaN(numericUserId)) {
+        console.error('Invalid user ID:', userId);
+        statusMessage.value = 'Ungültige User ID';
+        statusType.value = 'error';
+        setTimeout(() => {
+          statusMessage.value = '';
+          statusType.value = '';
+        }, 3000);
         return;
       }
 
@@ -667,7 +705,10 @@ export default {
           const endpoint = props.content?.favoritenDeleteEndpoint ||
             'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
 
-          const response = await fetch(`${endpoint}?id=${favoritId}`, {
+          const url = `${endpoint}?id=${favoritId}`;
+          console.log('Removing favorite:', url);
+
+          const response = await fetch(url, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -675,11 +716,19 @@ export default {
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text().catch(() => '');
+            console.error('Delete favorite API error:', {
+              status: response.status,
+              statusText: response.statusText,
+              body: errorText,
+              url: url
+            });
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
           // Remove from local state
           favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favoritId);
+          console.log('Favorite removed successfully');
 
           // Emit event
           emit('trigger-event', {
@@ -696,9 +745,11 @@ export default {
             'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten';
 
           const payload = {
-            user_id: parseInt(userId),
+            user_id: numericUserId,
             product_beschreibung_anfrage_id: item.id,
           };
+
+          console.log('Adding favorite:', endpoint, payload);
 
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -709,8 +760,18 @@ export default {
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text().catch(() => '');
+            console.error('Add favorite API error:', {
+              status: response.status,
+              statusText: response.statusText,
+              body: errorText,
+              url: endpoint,
+              payload: payload
+            });
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
+
+          console.log('Favorite added successfully');
 
           // Reload favorites to get the full object with joined data
           await loadFavoriten();
@@ -726,12 +787,12 @@ export default {
         }
 
       } catch (error) {
-        statusMessage.value = 'Fehler beim Aktualisieren der Favoriten';
+        statusMessage.value = `Fehler beim Aktualisieren der Favoriten: ${error.message}`;
         statusType.value = 'error';
         console.error('Toggle favorite error:', error);
 
         setTimeout(() => {
-          if (statusMessage.value === 'Fehler beim Aktualisieren der Favoriten') {
+          if (statusMessage.value.includes('Fehler beim Aktualisieren der Favoriten')) {
             statusMessage.value = '';
             statusType.value = '';
           }
@@ -745,8 +806,13 @@ export default {
     const removeFavorite = async (favorit) => {
       const userId = props.content?.userId;
       if (!userId) {
+        console.warn('removeFavorite: User ID is not set');
         statusMessage.value = 'User ID fehlt';
         statusType.value = 'error';
+        setTimeout(() => {
+          statusMessage.value = '';
+          statusType.value = '';
+        }, 3000);
         return;
       }
 
@@ -756,7 +822,10 @@ export default {
         const endpoint = props.content?.favoritenDeleteEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:mEnQftQz/favoriten_delete';
 
-        const response = await fetch(`${endpoint}?id=${favorit.id}`, {
+        const url = `${endpoint}?id=${favorit.id}`;
+        console.log('Removing favorite from list:', url);
+
+        const response = await fetch(url, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -764,11 +833,19 @@ export default {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text().catch(() => '');
+          console.error('Remove favorite API error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            url: url
+          });
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         // Remove from local state
         favoritenItems.value = favoritenItems.value.filter(fav => fav.id !== favorit.id);
+        console.log('Favorite removed from list successfully');
 
         // Emit event
         emit('trigger-event', {
@@ -780,12 +857,12 @@ export default {
         });
 
       } catch (error) {
-        statusMessage.value = 'Fehler beim Entfernen des Favoriten';
+        statusMessage.value = `Fehler beim Entfernen des Favoriten: ${error.message}`;
         statusType.value = 'error';
         console.error('Remove favorite error:', error);
 
         setTimeout(() => {
-          if (statusMessage.value === 'Fehler beim Entfernen des Favoriten') {
+          if (statusMessage.value.includes('Fehler beim Entfernen des Favoriten')) {
             statusMessage.value = '';
             statusType.value = '';
           }
@@ -1026,6 +1103,15 @@ export default {
 
     // Load historie and favoriten on mount
     onMounted(() => {
+      console.log('Component mounted', {
+        showHistorie: props.content?.showHistorie,
+        showFavoriten: props.content?.showFavoriten,
+        userId: props.content?.userId,
+        historieEndpoint: props.content?.historieEndpoint,
+        historieSearchEndpoint: props.content?.historieSearchEndpoint,
+        favoritenListEndpoint: props.content?.favoritenListEndpoint,
+      });
+
       if (props.content?.showHistorie) {
         loadHistorie();
       }
