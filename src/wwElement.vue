@@ -328,7 +328,7 @@ export default {
     };
 
     const loadFavorites = async () => {
-      if (!props.content.showFavoriten || !props.content.userId) {
+      if (!props.content.showFavoriten) {
         favorites.value = [];
         return;
       }
@@ -339,23 +339,53 @@ export default {
         const url = props.content.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list';
 
-        const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}`;
-        console.log('Loading favorites:', fullUrl);
+        console.log('Loading favorites:', url);
 
-        const res = await fetch(fullUrl);
+        const res = await fetch(url);
         console.log('Load favorites response:', res.status, res.statusText);
 
         if (!res.ok) {
           const errorText = await res.text().catch(() => '');
-          console.error('Load favorites error:', { status: res.status, body: errorText });
+          console.error('Load favorites error:', {
+            status: res.status,
+            statusText: res.statusText,
+            body: errorText,
+            url: url
+          });
+
+          // Try to parse error as JSON
+          try {
+            const errorJson = JSON.parse(errorText);
+            console.error('Load favorites error details:', errorJson);
+          } catch (e) {
+            console.error('Error response is not JSON:', errorText);
+          }
+
           throw new Error('Load failed');
         }
 
         const data = await res.json();
         console.log('Favorites data:', data);
+        console.log('Favorites data type:', typeof data, Array.isArray(data));
 
-        favorites.value = Array.isArray(data.favorites) ? data.favorites :
-                         Array.isArray(data) ? data : [];
+        // Handle different response structures
+        let favList = [];
+        if (Array.isArray(data)) {
+          favList = data;
+        } else if (data.favorites && Array.isArray(data.favorites)) {
+          favList = data.favorites;
+        } else if (data.items && Array.isArray(data.items)) {
+          favList = data.items;
+        }
+
+        // Filter by user_id if provided
+        if (props.content.userId) {
+          const userId = parseInt(props.content.userId);
+          favList = favList.filter(fav => fav.user_id === userId || fav.users_id === userId);
+          console.log('Filtered favorites for user', userId, ':', favList.length, 'items');
+        }
+
+        favorites.value = favList;
         console.log('Favorites loaded:', favorites.value.length, 'items');
         favPage.value = 1;
 
