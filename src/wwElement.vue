@@ -277,12 +277,25 @@ export default {
         const url = props.content.historieEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
 
-        const res = await fetch(url);
+        // Add user_id filter if available
+        let fullUrl = url;
+        if (props.content.userId) {
+          const userId = parseInt(props.content.userId);
+          if (!isNaN(userId)) {
+            const params = new URLSearchParams({ user_id: userId.toString() });
+            fullUrl = `${url}?${params.toString()}`;
+            console.log('Loading historie with user filter:', fullUrl);
+          }
+        }
+
+        const res = await fetch(fullUrl);
         if (!res.ok) throw new Error('Load failed');
 
         const data = await res.json();
         historie.value = Array.isArray(data) ? data : [];
         histPage.value = 1;
+
+        console.log('Historie loaded:', historie.value.length, 'items for user', props.content.userId);
 
         emit('trigger-event', {
           name: 'historie-loaded',
@@ -290,6 +303,7 @@ export default {
         });
 
       } catch (err) {
+        console.error('loadHistorie error:', err);
         historie.value = [];
       } finally {
         loadingHist.value = false;
