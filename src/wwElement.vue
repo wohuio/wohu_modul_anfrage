@@ -337,7 +337,7 @@ export default {
 
       try {
         const url = props.content.favoritenListEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list_id';
 
         const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}`;
         console.log('Loading favorites:', fullUrl);
