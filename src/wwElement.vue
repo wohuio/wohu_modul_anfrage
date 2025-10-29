@@ -384,11 +384,19 @@ export default {
     };
 
     const addFavorite = async (anfrageId) => {
+      const userId = props.content.userId;
+      if (!userId) {
+        console.error('addFavorite: user_id is required');
+        showStatus('User ID fehlt', 'error');
+        return;
+      }
+
       try {
         const url = props.content.favoritenAddEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_add';
 
         const payload = {
+          user_id: parseInt(userId),
           product_beschreibung_anfrage_id: anfrageId,
         };
 
