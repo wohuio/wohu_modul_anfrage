@@ -634,15 +634,18 @@ export default {
 </script>
 
 <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 .anfrage-module {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
+  background: #f8f9fa;
+  padding: 32px;
   color: var(--text);
   display: grid;
-  grid-template-columns: 1fr 350px 350px;
+  grid-template-columns: 1fr 400px 400px;
   gap: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 @media (max-width: 1200px) {
@@ -654,44 +657,57 @@ export default {
 .section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
 }
 
 .section-title {
-  margin: 0 0 12px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  border-bottom: 2px solid var(--border);
-  padding-bottom: 8px;
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .field label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--label);
+  color: #495057;
+  margin-bottom: 2px;
 }
 
 .field input,
 .field textarea {
-  padding: 10px 12px;
+  padding: 11px 14px;
   font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
   font-family: inherit;
+  transition: all 0.15s ease;
+  background: #fff;
+  color: #212529;
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: #adb5bd;
 }
 
 .field input:focus,
 .field textarea:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #4c6ef5;
+  box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
 }
 
 .auflagen {
@@ -710,45 +726,60 @@ export default {
 }
 
 .btn-remove {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   padding: 0;
+  background: #fff;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove:hover {
   background: #dc3545;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 18px;
 }
 
 .btn-add {
   padding: 10px 16px;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: white;
+  color: #4c6ef5;
+  border: 1px dashed #4c6ef5;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-add:hover {
+  background: #f8f9ff;
+  border-style: solid;
 }
 
 .status {
-  padding: 12px 16px;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .status.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #d3f9d8;
+  color: #2b8a3e;
+  border: 1px solid #8ce99a;
 }
 
 .status.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #ffe3e3;
+  color: #c92a2a;
+  border: 1px solid #ffa8a8;
 }
 
 .actions {
@@ -759,27 +790,43 @@ export default {
 .btn-primary,
 .btn-secondary {
   flex: 1;
-  padding: 12px 24px;
+  padding: 13px 24px;
   font-size: 14px;
   font-weight: 500;
-  border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  color: white;
+  transition: all 0.15s ease;
+  border: none;
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: #4c6ef5;
+  color: white;
+  box-shadow: 0 1px 2px rgba(76, 110, 245, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #3b5bdb;
+  box-shadow: 0 4px 12px rgba(76, 110, 245, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: var(--secondary);
+  background: white;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 
 .btn-primary:disabled,
 .btn-secondary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .search {
@@ -814,11 +861,13 @@ export default {
 }
 
 .empty {
-  padding: 20px;
+  padding: 32px 20px;
   text-align: center;
-  color: #999;
-  border: 1px dashed var(--border);
-  border-radius: 4px;
+  color: #adb5bd;
+  font-size: 14px;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  background: #f8f9fa;
 }
 
 .items {
@@ -827,24 +876,43 @@ export default {
   gap: 12px;
   max-height: 600px;
   overflow-y: auto;
+  padding-right: 4px;
+}
+
+.items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.items::-webkit-scrollbar-track {
+  background: #f1f3f5;
+  border-radius: 3px;
+}
+
+.items::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.items::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
 }
 
 .item {
   background: #fff;
-  border: 1px solid var(--border);
+  border: 1px solid #e9ecef;
   border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s;
+  padding: 18px;
+  transition: all 0.2s ease;
 }
 
 .item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #dee2e6;
 }
 
 .favorite-item {
-  background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
-  border: 2px solid #ffd700;
+  background: #fff9e6;
+  border: 1px solid #ffd43b;
 }
 
 .item-header {
@@ -860,33 +928,39 @@ export default {
   font-size: 15px;
   font-weight: 600;
   flex: 1;
+  color: #212529;
 }
 
 .btn-heart {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  background: transparent;
-  border: none;
+  background: white;
+  border: 1px solid #dee2e6;
   cursor: pointer;
   font-size: 18px;
-  border-radius: 50%;
+  border-radius: 8px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-heart:hover {
-  background: rgba(255, 0, 0, 0.1);
-  transform: scale(1.2);
+  background: #fff5f5;
+  border-color: #ffa8a8;
+  transform: scale(1.05);
 }
 
 .date {
   font-size: 11px;
-  color: #999;
-  background: #f5f5f5;
-  padding: 2px 8px;
-  border-radius: 3px;
+  color: #6c757d;
+  background: #e9ecef;
+  padding: 4px 10px;
+  border-radius: 4px;
   display: inline-block;
   margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .item p {
@@ -898,24 +972,31 @@ export default {
 
 .meta {
   font-size: 12px;
-  color: #555;
-  padding: 6px 10px;
-  background: #f9f9f9;
-  border-radius: 4px;
-  border-left: 3px solid var(--primary);
+  color: #495057;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #4c6ef5;
   margin-bottom: 12px;
 }
 
 .btn-template {
   width: 100%;
   padding: 10px 16px;
-  background: var(--primary);
+  background: #4c6ef5;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-template:hover {
+  background: #3b5bdb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 110, 245, 0.3);
 }
 
 .pagination {
@@ -923,17 +1004,27 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid #e9ecef;
 }
 
 .pagination button {
-  padding: 8px 12px;
+  padding: 8px 14px;
   background: white;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  transition: all 0.15s ease;
+  min-width: 36px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 
 .pagination button:disabled {
@@ -942,7 +1033,8 @@ export default {
 }
 
 .pagination span {
-  font-size: 14px;
-  color: var(--text);
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 500;
 }
 </style>
