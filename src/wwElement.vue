@@ -328,7 +328,7 @@ export default {
     };
 
     const loadFavorites = async () => {
-      if (!props.content.showFavoriten) {
+      if (!props.content.showFavoriten || !props.content.userId) {
         favorites.value = [];
         return;
       }
@@ -339,9 +339,10 @@ export default {
         const url = props.content.favoritenListEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_list';
 
-        console.log('Loading favorites:', url);
+        const fullUrl = `${url}?user_id=${parseInt(props.content.userId)}`;
+        console.log('Loading favorites:', fullUrl);
 
-        const res = await fetch(url);
+        const res = await fetch(fullUrl);
         console.log('Load favorites response:', res.status, res.statusText);
 
         if (!res.ok) {
@@ -350,7 +351,7 @@ export default {
             status: res.status,
             statusText: res.statusText,
             body: errorText,
-            url: url
+            url: fullUrl
           });
 
           // Try to parse error as JSON
@@ -369,23 +370,10 @@ export default {
         console.log('Favorites data type:', typeof data, Array.isArray(data));
 
         // Handle different response structures
-        let favList = [];
-        if (Array.isArray(data)) {
-          favList = data;
-        } else if (data.favorites && Array.isArray(data.favorites)) {
-          favList = data.favorites;
-        } else if (data.items && Array.isArray(data.items)) {
-          favList = data.items;
-        }
+        favorites.value = Array.isArray(data) ? data :
+                         Array.isArray(data.favorites) ? data.favorites :
+                         Array.isArray(data.items) ? data.items : [];
 
-        // Filter by user_id if provided
-        if (props.content.userId) {
-          const userId = parseInt(props.content.userId);
-          favList = favList.filter(fav => fav.user_id === userId || fav.users_id === userId);
-          console.log('Filtered favorites for user', userId, ':', favList.length, 'items');
-        }
-
-        favorites.value = favList;
         console.log('Favorites loaded:', favorites.value.length, 'items');
         favPage.value = 1;
 
