@@ -143,8 +143,8 @@ export default {
       bindable: true,
       hidden: (content) => !content?.showHistorie,
     },
-    maxHistorieItems: {
-      label: { en: "Max Historie Items" },
+    historieItemsPerPage: {
+      label: { en: "Historie Items Per Page" },
       type: "Number",
       section: "settings",
       defaultValue: 10,
@@ -153,7 +153,7 @@ export default {
       /* wwEditor:start */
       bindingValidation: {
         type: "number",
-        tooltip: "Maximum number of history items to display",
+        tooltip: "Number of history items per page",
       },
       /* wwEditor:end */
     },
@@ -195,6 +195,20 @@ export default {
       defaultValue: "Entfernen",
       bindable: true,
       hidden: (content) => !content?.showFavoriten,
+    },
+    favoritenItemsPerPage: {
+      label: { en: "Favoriten Items Per Page" },
+      type: "Number",
+      section: "settings",
+      defaultValue: 10,
+      bindable: true,
+      hidden: (content) => !content?.showFavoriten,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: "number",
+        tooltip: "Number of favorite items per page",
+      },
+      /* wwEditor:end */
     },
 
     // Form Field Labels

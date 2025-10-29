@@ -127,7 +127,7 @@
 
       <div v-else class="favoriten-list">
         <div
-          v-for="favorit in favoritenItems"
+          v-for="favorit in displayedFavoritenItems"
           :key="favorit.id"
           class="favoriten-item"
         >
@@ -167,6 +167,38 @@
             {{ content?.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
+      </div>
+
+      <!-- Favoriten Pagination -->
+      <div v-if="favoritenItems.length > favoritenItemsPerPage" class="pagination">
+        <button
+          class="pagination-btn"
+          @click="goToFavoritenPage(currentFavoritenPage - 1)"
+          :disabled="currentFavoritenPage === 1"
+        >
+          ‹ Zurück
+        </button>
+
+        <div class="pagination-numbers">
+          <button
+            v-for="page in getPageNumbers(currentFavoritenPage, favoritenTotalPages)"
+            :key="page"
+            class="pagination-number"
+            :class="{ active: page === currentFavoritenPage, ellipsis: page === '...' }"
+            @click="page !== '...' && goToFavoritenPage(page)"
+            :disabled="page === '...'"
+          >
+            {{ page }}
+          </button>
+        </div>
+
+        <button
+          class="pagination-btn"
+          @click="goToFavoritenPage(currentFavoritenPage + 1)"
+          :disabled="currentFavoritenPage === favoritenTotalPages"
+        >
+          Weiter ›
+        </button>
       </div>
     </div>
 
@@ -229,6 +261,38 @@
           </button>
         </div>
       </div>
+
+      <!-- Historie Pagination -->
+      <div v-if="historieItems.length > historieItemsPerPage" class="pagination">
+        <button
+          class="pagination-btn"
+          @click="goToHistoriePage(currentHistoriePage - 1)"
+          :disabled="currentHistoriePage === 1"
+        >
+          ‹ Zurück
+        </button>
+
+        <div class="pagination-numbers">
+          <button
+            v-for="page in getPageNumbers(currentHistoriePage, historieTotalPages)"
+            :key="page"
+            class="pagination-number"
+            :class="{ active: page === currentHistoriePage, ellipsis: page === '...' }"
+            @click="page !== '...' && goToHistoriePage(page)"
+            :disabled="page === '...'"
+          >
+            {{ page }}
+          </button>
+        </div>
+
+        <button
+          class="pagination-btn"
+          @click="goToHistoriePage(currentHistoriePage + 1)"
+          :disabled="currentHistoriePage === historieTotalPages"
+        >
+          Weiter ›
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -269,6 +333,10 @@ export default {
     const favoritenItems = ref([]);
     const isTogglingFavorite = ref(false);
 
+    // Pagination
+    const currentHistoriePage = ref(1);
+    const currentFavoritenPage = ref(1);
+
     // Internal variables for NoCode users
     const { value: lastRequestData, setValue: setLastRequestData } =
       wwLib.wwVariable.useComponentVariable({
@@ -300,9 +368,26 @@ export default {
       return 'layout-single';
     });
 
+    const historieItemsPerPage = computed(() => props.content?.historieItemsPerPage || 10);
+    const historieTotalPages = computed(() =>
+      Math.ceil(historieItems.value.length / historieItemsPerPage.value)
+    );
+
     const displayedHistorieItems = computed(() => {
-      const max = props.content?.maxHistorieItems || 10;
-      return historieItems.value.slice(0, max);
+      const start = (currentHistoriePage.value - 1) * historieItemsPerPage.value;
+      const end = start + historieItemsPerPage.value;
+      return historieItems.value.slice(start, end);
+    });
+
+    const favoritenItemsPerPage = computed(() => props.content?.favoritenItemsPerPage || 10);
+    const favoritenTotalPages = computed(() =>
+      Math.ceil(favoritenItems.value.length / favoritenItemsPerPage.value)
+    );
+
+    const displayedFavoritenItems = computed(() => {
+      const start = (currentFavoritenPage.value - 1) * favoritenItemsPerPage.value;
+      const end = start + favoritenItemsPerPage.value;
+      return favoritenItems.value.slice(start, end);
     });
 
     // Computed styles
@@ -378,6 +463,9 @@ export default {
         const data = await response.json();
         historieItems.value = Array.isArray(data) ? data : [];
 
+        // Reset to first page when data changes
+        currentHistoriePage.value = 1;
+
         // Emit historie-loaded event
         emit('trigger-event', {
           name: 'historie-loaded',
@@ -427,6 +515,9 @@ export default {
 
         const data = await response.json();
         favoritenItems.value = Array.isArray(data) ? data : [];
+
+        // Reset to first page when data changes
+        currentFavoritenPage.value = 1;
 
         // Emit favoriten-loaded event
         emit('trigger-event', {
@@ -754,6 +845,48 @@ export default {
       }
     };
 
+    // Pagination helpers
+    const goToHistoriePage = (page) => {
+      if (page >= 1 && page <= historieTotalPages.value) {
+        currentHistoriePage.value = page;
+      }
+    };
+
+    const goToFavoritenPage = (page) => {
+      if (page >= 1 && page <= favoritenTotalPages.value) {
+        currentFavoritenPage.value = page;
+      }
+    };
+
+    const getPageNumbers = (currentPage, totalPages) => {
+      const pages = [];
+      const maxVisible = 5;
+
+      if (totalPages <= maxVisible) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPage <= 3) {
+          for (let i = 1; i <= 4; i++) pages.push(i);
+          pages.push('...');
+          pages.push(totalPages);
+        } else if (currentPage >= totalPages - 2) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+        } else {
+          pages.push(1);
+          pages.push('...');
+          for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      }
+
+      return pages;
+    };
+
     // Watch for showHistorie changes
     watch(
       () => props.content?.showHistorie,
@@ -817,7 +950,14 @@ export default {
       isLoadingFavoriten,
       favoritenError,
       favoritenItems,
+      displayedFavoritenItems,
       isTogglingFavorite,
+      currentHistoriePage,
+      currentFavoritenPage,
+      historieTotalPages,
+      favoritenTotalPages,
+      historieItemsPerPage,
+      favoritenItemsPerPage,
       layoutClass,
       containerStyle,
       inputStyle,
@@ -834,6 +974,9 @@ export default {
       isFavorite,
       toggleFavorite,
       removeFavorite,
+      goToHistoriePage,
+      goToFavoritenPage,
+      getPageNumbers,
     };
   },
 };
@@ -1323,6 +1466,95 @@ export default {
   }
 }
 
+// Pagination
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background-color: #f5f5f5;
+    border-color: #007bff;
+    color: #007bff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #f9f9f9;
+  }
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled):not(.ellipsis) {
+    background-color: #f5f5f5;
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+  }
+
+  &.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  }
+
+  &.ellipsis {
+    border: none;
+    background: transparent;
+    cursor: default;
+    font-weight: bold;
+    color: #999;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
 // Responsive design
 @media (max-width: 1024px) {
   .anfrage-module.layout-right,
@@ -1366,6 +1598,20 @@ export default {
 
   .historie-item-date {
     align-self: flex-start;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pagination-btn {
+    width: 100%;
+  }
+
+  .pagination-numbers {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
