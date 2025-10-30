@@ -1,0 +1,669 @@
+/* ============================================
+   HOLOGRAPHIC DESIGN SYSTEM v2.0
+   Installation: 2025-10-30
+   Complete system with all UI elements
+   ============================================ */
+
+/* === GLOBAL VARIABLES === */
+:root {
+  --holo-primary: #0ff;
+  --holo-secondary: #00ffff;
+  --holo-glow: rgba(0, 255, 255, 0.6);
+  --holo-border: rgba(0, 255, 255, 0.3);
+  --holo-bg-dark: #111;
+  --holo-bg-light: #1a1a1a;
+  --transition-speed: 0.4s;
+}
+
+/* ============================================
+   MISSION 1: LINKS & NAVIGATION
+   ============================================ */
+
+/* === LINKS === */
+a:not([class*="button"]):not(.no-holo) {
+  color: var(--holo-primary);
+  position: relative;
+  text-decoration: none;
+  transition: all var(--transition-speed) ease;
+}
+
+a:not([class*="button"])::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--holo-primary), var(--holo-secondary));
+  transition: width var(--transition-speed) ease;
+}
+
+a:not([class*="button"]):hover {
+  text-shadow: 0 0 10px var(--holo-glow);
+}
+
+a:not([class*="button"]):hover::after {
+  width: 100%;
+}
+
+/* Navigation Menüs */
+nav a,
+.nav a,
+.menu a,
+[class*="nav"] a,
+[class*="menu"] a {
+  padding: 10px 20px;
+  display: inline-block;
+  border-radius: 6px;
+}
+
+nav a:hover,
+.nav a:hover,
+.menu a:hover {
+  background: rgba(0, 255, 255, 0.1);
+}
+
+/* ============================================
+   MISSION 2: INPUT FIELDS & FORMS
+   ============================================ */
+
+/* === INPUT FIELDS & FORMS === */
+input[type="text"]:not(.no-holo),
+input[type="email"]:not(.no-holo),
+input[type="password"]:not(.no-holo),
+input[type="number"]:not(.no-holo),
+input[type="tel"]:not(.no-holo),
+input[type="url"]:not(.no-holo),
+input[type="search"]:not(.no-holo),
+textarea:not(.no-holo),
+select:not(.no-holo) {
+  border: 1px solid var(--holo-border) !important;
+  border-radius: 6px;
+  padding: 10px 14px;
+  transition: all var(--transition-speed) ease;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--holo-primary) !important;
+  box-shadow: 0 0 15px var(--holo-glow) !important;
+  background: rgba(0, 255, 255, 0.05);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(0, 255, 255, 0.4);
+  transition: all var(--transition-speed) ease;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: rgba(0, 255, 255, 0.6);
+}
+
+/* Form Labels */
+label {
+  color: var(--holo-primary);
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+  transition: all var(--transition-speed) ease;
+}
+
+label:hover {
+  text-shadow: 0 0 8px var(--holo-glow);
+}
+
+/* ============================================
+   MISSION 3: CARDS & CONTAINERS
+   ============================================ */
+
+/* === CARDS & CONTAINERS === */
+.card:not(.no-holo),
+[class*="card"]:not(.no-holo),
+.container:not(.no-holo),
+[class*="container"]:not(.no-holo),
+.box:not(.no-holo) {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--holo-border);
+  transition: all var(--transition-speed) ease;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.card::before,
+[class*="card"]::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(0,255,255,0.1), transparent);
+  transform: rotate(-45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.card:hover,
+[class*="card"]:hover,
+.container:hover,
+[class*="container"]:hover,
+.box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px var(--holo-glow);
+  border-color: var(--holo-primary);
+}
+
+.card:hover::before,
+[class*="card"]:hover::before {
+  opacity: 1;
+  transform: rotate(-45deg) translateX(100%);
+}
+
+/* ============================================
+   MISSION 4: IMAGES
+   ============================================ */
+
+/* === IMAGES === */
+img:not(.no-holo) {
+  transition: all var(--transition-speed) ease;
+  border-radius: 8px;
+}
+
+img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px var(--holo-glow);
+  filter: brightness(1.1) contrast(1.05);
+}
+
+/* Image Wrapper */
+.image-wrapper,
+[class*="image"],
+figure {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.image-wrapper:hover img,
+[class*="image"]:hover img,
+figure:hover img {
+  transform: scale(1.05);
+}
+
+/* ============================================
+   MISSION 5: HEADINGS
+   ============================================ */
+
+/* === HEADINGS === */
+h1:not(.no-holo),
+h2:not(.no-holo),
+h3:not(.no-holo),
+h4:not(.no-holo),
+h5:not(.no-holo),
+h6:not(.no-holo) {
+  color: var(--holo-primary);
+  position: relative;
+  transition: all var(--transition-speed) ease;
+  cursor: default;
+}
+
+h1:hover, h2:hover, h3:hover {
+  text-shadow: 0 0 20px var(--holo-glow);
+  transform: translateX(3px);
+}
+
+h4:hover, h5:hover, h6:hover {
+  text-shadow: 0 0 15px var(--holo-glow);
+  transform: translateX(2px);
+}
+
+/* Heading mit Underline */
+h1::after, h2::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--holo-primary);
+  transition: width var(--transition-speed) ease;
+}
+
+h1:hover::after, h2:hover::after {
+  width: 60px;
+}
+
+/* ============================================
+   MISSION 6: TABLES
+   ============================================ */
+
+/* === TABLES === */
+table:not(.no-holo) {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--holo-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background: rgba(0, 255, 255, 0.1);
+  color: var(--holo-primary);
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid var(--holo-border);
+  font-weight: 600;
+}
+
+td {
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  transition: all var(--transition-speed) ease;
+}
+
+tr:hover {
+  background: rgba(0, 255, 255, 0.05);
+}
+
+tr:hover td {
+  color: var(--holo-primary);
+  text-shadow: 0 0 5px var(--holo-glow);
+}
+
+/* Striped Rows */
+tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+tbody tr:nth-child(even):hover {
+  background: rgba(0, 255, 255, 0.08);
+}
+
+/* ============================================
+   MISSION 7: BADGES & TAGS
+   ============================================ */
+
+/* === BADGES & TAGS === */
+.badge:not(.no-holo),
+.tag:not(.no-holo),
+.label:not(.no-holo),
+[class*="badge"]:not(.no-holo),
+[class*="tag"]:not(.no-holo) {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid var(--holo-border);
+  color: var(--holo-primary);
+  font-size: 0.85em;
+  font-weight: 500;
+  transition: all var(--transition-speed) ease;
+  cursor: default;
+}
+
+.badge:hover,
+.tag:hover,
+.label:hover,
+[class*="badge"]:hover,
+[class*="tag"]:hover {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 15px var(--holo-glow);
+  transform: scale(1.05);
+  border-color: var(--holo-primary);
+}
+
+/* ============================================
+   MISSION 8: CHECKBOXES & RADIO BUTTONS
+   ============================================ */
+
+/* === CHECKBOXES & RADIO === */
+input[type="checkbox"]:not(.no-holo),
+input[type="radio"]:not(.no-holo) {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--holo-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+input[type="radio"]:not(.no-holo) {
+  border-radius: 50%;
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: var(--holo-primary);
+  box-shadow: 0 0 10px var(--holo-glow);
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--holo-primary);
+  border-color: var(--holo-primary);
+  box-shadow: 0 0 15px var(--holo-glow);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: #000;
+  font-weight: bold;
+  font-size: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #000;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ============================================
+   MISSION 9: ALERTS & NOTIFICATIONS
+   ============================================ */
+
+/* === ALERTS & NOTIFICATIONS === */
+.alert:not(.no-holo),
+.notification:not(.no-holo),
+.message:not(.no-holo),
+[class*="alert"]:not(.no-holo) {
+  padding: 15px 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--holo-primary);
+  background: rgba(0, 255, 255, 0.05);
+  margin: 10px 0;
+  transition: all var(--transition-speed) ease;
+}
+
+.alert:hover,
+.notification:hover,
+.message:hover {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 20px var(--holo-glow);
+  transform: translateX(5px);
+  border-left-width: 6px;
+}
+
+/* Alert Icons */
+.alert::before,
+.notification::before {
+  content: 'ℹ';
+  color: var(--holo-primary);
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+/* ============================================
+   MISSION 10: SCROLLBAR
+   ============================================ */
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--holo-bg-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--holo-border);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--holo-primary);
+  box-shadow: 0 0 10px var(--holo-glow);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--holo-border) var(--holo-bg-dark);
+}
+
+/* ============================================
+   BUTTONS (ORIGINAL FROM v3.4.1)
+   ============================================ */
+
+/* === BUTTONS === */
+button:not([class*="no-holo"]),
+.btn,
+input[type="submit"],
+input[type="button"],
+a[class*="button"]:not([class*="no-holo"]) {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: all var(--transition-speed) ease;
+  border: 1px solid var(--holo-border) !important;
+  cursor: pointer;
+}
+
+button::before,
+.btn::before,
+input[type="submit"]::before,
+input[type="button"]::before,
+a[class*="button"]::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(0deg, transparent, transparent 30%, rgba(0,255,255,0.3));
+  transform: rotate(-45deg);
+  transition: all 0.5s ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+button:hover::before,
+.btn:hover::before,
+input[type="submit"]:hover::before,
+input[type="button"]:hover::before,
+a[class*="button"]:hover::before {
+  opacity: 1;
+  transform: rotate(-45deg) translateY(100%);
+}
+
+button:hover,
+.btn:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+a[class*="button"]:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--holo-glow) !important;
+  border-color: var(--holo-primary) !important;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* === UTILITY CLASSES === */
+.no-holo,
+.no-holographic {
+  /* Elemente mit dieser Klasse werden NICHT gestyled */
+}
+
+.holo-pulse {
+  animation: holo-pulse 2s infinite;
+}
+
+@keyframes holo-pulse {
+  0%, 100% { box-shadow: 0 0 10px var(--holo-glow); }
+  50% { box-shadow: 0 0 30px var(--holo-glow); }
+}
+
+.holo-glow {
+  animation: holo-glow 2s infinite;
+}
+
+@keyframes holo-glow {
+  0%, 100% { box-shadow: 0 0 5px var(--holo-glow); }
+  50% { box-shadow: 0 0 20px var(--holo-glow); }
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* ============================================
+   LISTS & DIVIDERS
+   ============================================ */
+
+/* === LISTS === */
+li:not(.no-holo) {
+  position: relative;
+  transition: all var(--transition-speed) ease;
+}
+
+li:hover {
+  transform: translateX(5px);
+  color: var(--holo-primary);
+}
+
+/* === DIVIDERS === */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--holo-primary), transparent);
+  margin: 20px 0;
+}
+
+/* ============================================
+   TOOLTIPS & DROPDOWNS
+   ============================================ */
+
+/* === TOOLTIPS === */
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: var(--holo-bg-dark);
+  color: var(--holo-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--holo-border);
+  white-space: nowrap;
+  opacity: 0;
+  transition: all var(--transition-speed) ease;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+[data-tooltip]:hover::after {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+/* === DROPDOWNS === */
+.dropdown:not(.no-holo),
+[class*="dropdown"]:not(.no-holo) {
+  position: relative;
+}
+
+.dropdown-menu,
+.dropdown-content {
+  border: 1px solid var(--holo-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px var(--holo-glow);
+  background: var(--holo-bg-dark);
+}
+
+.dropdown-item {
+  padding: 10px 20px;
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+  color: var(--holo-primary);
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 255, 255, 0.1);
+  padding-left: 25px;
+}
+
+/* ============================================
+   PROGRESS BARS & MODALS
+   ============================================ */
+
+/* === PROGRESS BARS === */
+.progress:not(.no-holo),
+progress:not(.no-holo),
+[class*="progress"]:not(.no-holo) {
+  background: var(--holo-bg-dark);
+  border-radius: 10px;
+  border: 1px solid var(--holo-border);
+  overflow: hidden;
+}
+
+.progress-bar,
+progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--holo-primary), var(--holo-secondary));
+  box-shadow: 0 0 10px var(--holo-glow);
+  transition: all var(--transition-speed) ease;
+}
+
+/* === MODALS === */
+.modal:not(.no-holo),
+.popup:not(.no-holo),
+.dialog:not(.no-holo),
+[class*="modal"]:not(.no-holo),
+[class*="popup"]:not(.no-holo) {
+  border: 2px solid var(--holo-border);
+  border-radius: 15px;
+  box-shadow: 0 0 50px var(--holo-glow);
+  position: relative;
+  overflow: hidden;
+  background: var(--holo-bg-light);
+}
+
+.modal::before,
+.popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.1), transparent);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+/* ============================================
+   END OF HOLOGRAPHIC DESIGN SYSTEM
+   ============================================ */
