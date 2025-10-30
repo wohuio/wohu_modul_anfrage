@@ -484,7 +484,7 @@ export default {
           }
 
           try {
-            const productUrl = `${detailEndpoint}/${productId}`;
+            const productUrl = `${detailEndpoint}?id=${productId}`;
             console.log('Fetching product:', productUrl);
 
             const productRes = await fetch(productUrl);

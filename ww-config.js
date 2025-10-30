@@ -122,7 +122,7 @@ export default {
       /* wwEditor:start */
       bindingValidation: {
         type: "string",
-        tooltip: "Xano API endpoint URL for fetching single product details by ID (append /{id})",
+        tooltip: "Xano API endpoint URL for fetching single product details by ID (uses ?id= query parameter)",
       },
       /* wwEditor:end */
     },
