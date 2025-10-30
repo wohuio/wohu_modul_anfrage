@@ -117,7 +117,7 @@ export default {
       label: { en: "Produkt Detail Endpoint (GET)" },
       type: "Text",
       section: "settings",
-      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage",
+      defaultValue: "https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage_by_id",
       bindable: true,
       /* wwEditor:start */
       bindingValidation: {

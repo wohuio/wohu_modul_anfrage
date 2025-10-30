@@ -470,7 +470,7 @@ export default {
 
         // Step 2: Load product details for each favorite
         const detailEndpoint = props.content.produktDetailEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage_by_id';
 
         console.log('=== Loading product details (Step 2) ===');
         console.log('Detail endpoint:', detailEndpoint);
@@ -597,25 +597,55 @@ export default {
     };
 
     const removeFavorite = async (favId) => {
+      if (!props.content.userId) {
+        showStatus('User ID fehlt', 'error');
+        return;
+      }
+
       try {
         const url = props.content.favoritenDeleteEndpoint ||
           'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/favoriten_delete';
 
-        const res = await fetch(`${url}?id=${favId}`, {
+        const userId = parseInt(props.content.userId);
+        const fullUrl = `${url}?id=${favId}&user_id=${userId}`;
+
+        console.log('=== Removing favorite ===');
+        console.log('URL:', fullUrl);
+        console.log('Favorite ID:', favId);
+        console.log('User ID:', userId);
+
+        const res = await fetch(fullUrl, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!res.ok) throw new Error('Delete failed');
+        console.log('Delete response:', res.status, res.statusText);
 
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error('Delete error:', {
+            status: res.status,
+            statusText: res.statusText,
+            body: errorText
+          });
+          throw new Error('Delete failed');
+        }
+
+        const data = await res.json();
+        console.log('Delete success:', data);
+
+        // Remove from local state
         favorites.value = favorites.value.filter(f => f.id !== favId);
+
+        showStatus('Favorit entfernt!', 'success');
 
         emit('trigger-event', {
           name: 'favorite-removed',
-          event: { favorit_id: favId },
+          event: { favorit_id: favId, user_id: userId },
         });
 
       } catch (err) {
+        console.error('removeFavorite error:', err);
         showStatus('Fehler beim Entfernen', 'error');
       }
     };
