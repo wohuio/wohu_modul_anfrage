@@ -42,7 +42,7 @@
               <button
                 v-if="form.menge.length > (content.minAuflagen || 1)"
                 type="button"
-                class="btn-remove"
+                class="btn-remove holo-button"
                 @click="form.menge.splice(idx, 1)"
               >
                 ✕
@@ -52,7 +52,7 @@
           <button
             v-if="form.menge.length < (content.maxAuflagen || 10)"
             type="button"
-            class="btn-add"
+            class="btn-add holo-button"
             @click="form.menge.push(0)"
           >
             {{ content.addAuflageButtonText || '+ Auflage hinzufügen' }}
@@ -66,10 +66,10 @@
 
         <!-- Actions -->
         <div class="actions">
-          <button type="submit" class="btn-primary" :disabled="loading">
+          <button type="submit" class="btn-primary holo-button" :disabled="loading">
             {{ loading ? 'Wird gesendet...' : (content.submitButtonText || 'Anfrage senden') }}
           </button>
-          <button type="button" class="btn-secondary" @click="resetForm" :disabled="loading">
+          <button type="button" class="btn-secondary holo-button" @click="resetForm" :disabled="loading">
             {{ content.resetButtonText || 'Zurücksetzen' }}
           </button>
         </div>
@@ -86,14 +86,14 @@
         <div v-for="fav in paginatedFavorites" :key="fav.id" class="item favorite-item">
           <div class="item-header">
             <h3>{{ getFavTitel(fav) }}</h3>
-            <button class="btn-heart" @click="removeFavorite(fav.id)">❤️</button>
+            <button class="btn-heart holo-button" @click="removeFavorite(fav.id)">❤️</button>
           </div>
           <p>{{ getFavBeschreibung(fav) }}</p>
           <div class="meta">
             <strong>Auflagen:</strong>
             {{ getFavMenge(fav) }}
           </div>
-          <button class="btn-template" @click="loadTemplate(getFavData(fav))">
+          <button class="btn-template holo-button" @click="loadTemplate(getFavData(fav))">
             {{ content.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
@@ -101,9 +101,9 @@
 
       <!-- Pagination -->
       <div v-if="totalFavPages > 1" class="pagination">
-        <button @click="favPage--" :disabled="favPage === 1">‹</button>
+        <button class="holo-button" @click="favPage--" :disabled="favPage === 1">‹</button>
         <span>{{ favPage }} / {{ totalFavPages }}</span>
-        <button @click="favPage++" :disabled="favPage === totalFavPages">›</button>
+        <button class="holo-button" @click="favPage++" :disabled="favPage === totalFavPages">›</button>
       </div>
     </div>
 
@@ -119,7 +119,7 @@
           :placeholder="content.historieSearchPlaceholder || 'Suchen...'"
           @input="onSearch"
         />
-        <button v-if="searchQuery" class="btn-clear" @click="clearSearch">✕</button>
+        <button v-if="searchQuery" class="btn-clear holo-button" @click="clearSearch">✕</button>
       </div>
 
       <div v-if="loadingHist" class="empty">Lade Historie...</div>
@@ -128,7 +128,7 @@
         <div v-for="item in paginatedHistorie" :key="item.id" class="item">
           <div class="item-header">
             <h3>{{ item.produkt_titel }}</h3>
-            <button class="btn-heart" @click="toggleFavorite(item.id)">
+            <button class="btn-heart holo-button" @click="toggleFavorite(item.id)">
               {{ isFavorite(item.id) ? '❤️' : '🤍' }}
             </button>
           </div>
@@ -137,7 +137,7 @@
           <div class="meta">
             <strong>Auflagen:</strong> {{ formatMenge(item.menge) }}
           </div>
-          <button class="btn-template" @click="loadTemplate(item)">
+          <button class="btn-template holo-button" @click="loadTemplate(item)">
             {{ content.loadTemplateButtonText || 'Als Vorlage laden' }}
           </button>
         </div>
@@ -145,9 +145,9 @@
 
       <!-- Pagination -->
       <div v-if="totalHistPages > 1" class="pagination">
-        <button @click="histPage--" :disabled="histPage === 1">‹</button>
+        <button class="holo-button" @click="histPage--" :disabled="histPage === 1">‹</button>
         <span>{{ histPage }} / {{ totalHistPages }}</span>
-        <button @click="histPage++" :disabled="histPage === totalHistPages">›</button>
+        <button class="holo-button" @click="histPage++" :disabled="histPage === totalHistPages">›</button>
       </div>
     </div>
   </div>
@@ -1252,5 +1252,51 @@ html {
   .section {
     padding: 24px;
   }
+}
+
+/* ===== Holographic Button Effect ===== */
+.holo-button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.holo-button::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(0deg, transparent, transparent 30%, rgba(0,255,255,0.3));
+  transform: rotate(-45deg);
+  transition: all 0.5s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.holo-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0,255,255,0.6);
+  border-color: rgba(0,255,255,0.8);
+}
+
+.holo-button:hover::before {
+  opacity: 1;
+  transform: rotate(-45deg) translateY(100%);
+}
+
+.holo-button:disabled {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(0, 255, 255, 0.1);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.holo-button:disabled::before {
+  display: none;
 }
 </style>
