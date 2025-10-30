@@ -470,7 +470,7 @@ export default {
 
         // Step 2: Load product details for each favorite
         const detailEndpoint = props.content.produktDetailEndpoint ||
-          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage';
+          'https://xv05-su7k-rvc8.f2.xano.io/api:SBdZMdsy/product_beschreibung_anfrage_by_id';
 
         console.log('=== Loading product details (Step 2) ===');
         console.log('Detail endpoint:', detailEndpoint);
@@ -484,7 +484,7 @@ export default {
           }
 
           try {
-            const productUrl = `${detailEndpoint}/${productId}`;
+            const productUrl = `${detailEndpoint}?id=${productId}`;
             console.log('Fetching product:', productUrl);
 
             const productRes = await fetch(productUrl);
